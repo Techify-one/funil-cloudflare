@@ -18,7 +18,7 @@ const WITH_DEMO = args.has('--demo');
 const WITH_DEBUG = args.has('--debug-approve');
 const INSTANCE_PATH = resolve(ROOT, '.instance.json');
 
-const REQUIRED = ['CLOUDFLARE_API_TOKEN', 'APP_HOSTNAME', 'MP_PUBLIC_KEY', 'MP_ACCESS_TOKEN', 'META_PIXEL_ID'];
+const REQUIRED = ['CLOUDFLARE_API_TOKEN', 'APP_HOSTNAME', 'MP_PUBLIC_KEY', 'MP_ACCESS_TOKEN', 'META_PIXEL_ID', 'META_PIXEL_ACCESS_TOKEN'];
 
 // Segredos enviados com `wrangler secret bulk` (nunca vão para o wrangler.toml).
 const SECRETS = [

@@ -412,12 +412,13 @@ export async function sendMetaCapiEvent(request, env, body) {
   if (testEventCode) payload.test_event_code = testEventCode.slice(0, 100);
 
   const apiVer = env.META_API_VERSION || 'v25.0';
-  const url = `https://graph.facebook.com/${apiVer}/${pixelId}/events?access_token=${encodeURIComponent(token)}`;
+  // O token vai no corpo, não na URL (URLs podem parar em logs de proxy).
+  const url = `https://graph.facebook.com/${apiVer}/${pixelId}/events`;
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, access_token: token }),
     });
     let responseBody = null;
     try { responseBody = await response.json(); } catch (_) { /* ignore invalid JSON */ }

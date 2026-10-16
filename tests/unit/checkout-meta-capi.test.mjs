@@ -147,7 +147,7 @@ test('sendMetaCapiEvent attaches META_TEST_EVENT_CODE to every server event', as
     assert.equal(result.ok, true);
     assert.equal(graph.calls.length, 1);
     assert.equal(graph.calls[0].body.test_event_code, 'TEST12345');
-    assert.match(graph.calls[0].url, /\/222222222222222\/events\?/);
+    assert.match(graph.calls[0].url, /\/222222222222222\/events$/);
   } finally {
     graph.restore();
   }
@@ -193,8 +193,10 @@ test('offer pixel and token override the instance fallback; empty offer uses MET
   try {
     await post(envFor(offerRow('444444444444444', 'offer-token')));
     await post(envFor(offerRow(null, null)));
-    assert.match(graph.calls[0].url, /\/444444444444444\/events\?access_token=offer-token$/);
-    assert.match(graph.calls[1].url, /\/333333333333333\/events\?access_token=instance-token$/);
+    assert.match(graph.calls[0].url, /\/444444444444444\/events$/);
+    assert.equal(graph.calls[0].body.access_token, 'offer-token');
+    assert.match(graph.calls[1].url, /\/333333333333333\/events$/);
+    assert.equal(graph.calls[1].body.access_token, 'instance-token');
   } finally {
     graph.restore();
   }

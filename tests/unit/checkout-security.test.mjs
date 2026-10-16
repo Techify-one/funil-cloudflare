@@ -58,7 +58,8 @@ test('checkout-event accepts InitiateCheckout and builds custom_data on the serv
   assert.equal(resp.status, 202);
 
   const [call] = capiCalls(fake);
-  assert.match(call.url, /\/444444444444444\/events\?access_token=offer-token$/);
+  assert.match(call.url, /\/444444444444444\/events$/);
+  assert.equal(call.body.access_token, 'offer-token', 'token sai do servidor, no corpo');
   assert.equal('test_event_code' in call.body, false, 'client test_event_code is ignored');
   const event = call.body.data[0];
   assert.equal(event.event_name, 'InitiateCheckout');

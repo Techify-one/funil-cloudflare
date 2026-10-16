@@ -70,7 +70,8 @@ test('handleMetaEvent sends server-built custom_data and drops client test_event
     assert.equal(resp.status, 204);
     await Promise.all(pending);
     assert.equal(calls.length, 1);
-    assert.match(calls[0].url, /\/999\/events\?access_token=env-token$/);
+    assert.match(calls[0].url, /\/999\/events$/);
+    assert.equal(calls[0].body.access_token, 'env-token');
     assert.equal('test_event_code' in calls[0].body, false);
     assert.deepEqual(calls[0].body.data[0].custom_data, { content_name: 'P', value: 97, currency: 'BRL' });
   } finally {

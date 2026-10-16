@@ -23,11 +23,14 @@ Este arquivo é o manual completo: setup do zero, arquitetura e convenções. El
 | Meta Pixel + token da Conversions API | Rastrear conversões | Sim |
 | Token da Marketing API da Meta | Tela `/meta` e criação de campanhas | Não |
 | Domínio cadastrado no Cloudflare Email Sending | E-mail de confirmação pós-compra | Não |
+| [gitleaks](https://github.com/gitleaks/gitleaks#installing) | `npm run scan` (varredura de segredos antes de publicar mudanças) | Não |
+
+> Quer só ver funcionando antes de criar contas? Pule para a seção 1.8 (`npm run dev`): roda tudo no seu computador, sem Cloudflare, Mercado Pago ou Meta.
 
 ### 1.2 Instalar
 
 ```bash
-git clone <url-deste-repositorio> funil
+git clone <URL deste repositório no GitHub> funil
 cd funil
 npm install
 cp .env.example .env
@@ -80,12 +83,18 @@ CLOUDFLARE_API_TOKEN=cole_o_token_aqui
 | `META_ACCESS_TOKEN` | Opcional. Business Manager → Usuários do sistema → gerar token com `ads_read` e `ads_management`. Alimenta a tela `/meta` e as skills de campanha. |
 | `META_AD_ACCOUNT_ID` | Opcional. ID da conta de anúncios, formato `act_123...`. Para várias contas use `META_AD_ACCOUNT_IDS=act_1,act_2`. |
 | `EMAIL_FROM`, `CLOUDFLARE_EMAIL_API_TOKEN` | Opcional. Veja a seção 1.7. |
-| `DASH_USER`, `DASH_PASS` | Login do dashboard. Deixe `DASH_PASS` vazio para o setup gerar uma senha forte e gravar no `.env`. |
+| `DASH_USER`, `DASH_PASS` | Login do dashboard. Deixe `DASH_PASS` vazio para o setup gerar uma senha forte e gravar no `.env` (mínimo de 16 caracteres se você escolher). |
+| `CLOUDFLARE_ACCOUNT_ID` | Opcional. Detectado sozinho quando o token enxerga uma única conta; senão, copie de Cloudflare → menu da conta → **Copy account ID**. |
+| `WORKER_NAME`, `D1_NAME` | Opcionais. Nomes do Worker e do banco; o padrão vem da primeira parte do `APP_HOSTNAME` (`vendas` e `vendas-db`). |
+| `DEFAULT_PAGE` | Página aberta em `https://APP_HOSTNAME/`. Padrão `exemplo`. |
+| `META_API_VERSION` | Opcional. Versão da Graph API (padrão `v25.0`). |
+
+Valores com espaço precisam de aspas: `BRAND_NAME="Minha Empresa"`.
 
 ### 1.5 Rodar o setup
 
 ```bash
-npm run setup -- --dry-run   # só valida o .env e o token, não cria nada
+npm run setup -- --dry-run   # só valida o .env e o token, não cria nada (obrigatórios: CLOUDFLARE_API_TOKEN, APP_HOSTNAME, MP_PUBLIC_KEY, MP_ACCESS_TOKEN, META_PIXEL_ID, META_PIXEL_ACCESS_TOKEN)
 npm run setup -- --demo      # setup completo + oferta e funil de exemplo
 ```
 
@@ -96,7 +105,7 @@ O setup faz, em ordem:
 3. Cria o banco D1 (ou reaproveita o que ele mesmo criou antes).
 4. Gera o `wrangler.toml` a partir do `wrangler.toml.example`.
 5. Aplica o schema (`migrations/`) e os dados iniciais (`seed/`).
-6. Roda os testes automatizados.
+6. Roda os testes automatizados. Se algum falhar, para antes de publicar.
 7. Publica o Worker no seu domínio (DNS e certificado automáticos).
 8. Envia os segredos (`wrangler secret bulk`).
 9. Roda o teste de fumaça (`npm run smoke`).
@@ -134,7 +143,15 @@ Cada envio fica registrado em **Vendas → Ver disparos**, com opção de reenvi
 npm run dev
 ```
 
-Sobe tudo em `http://localhost:8787` com banco local (`.wrangler/`), schema e dados de exemplo. Nada é enviado para a Cloudflare. Login do painel: `admin` / `dev` (ou o que estiver no `.env`).
+Sobe tudo em `http://localhost:8787` (outra porta: `PORT=8811 npm run dev`) com banco local, schema e dados de exemplo. Nada é enviado para a Cloudflare.
+
+| Endereço | O que é |
+|---|---|
+| `http://localhost:8787/exemplo` | Página de vendas de exemplo (a raiz `/` redireciona para ela) |
+| `http://localhost:8787/checkout/produto-exemplo` | Checkout da oferta de exemplo |
+| `http://localhost:8787/painel` | Dashboard. Usuário: `DASH_USER` do `.env` (padrão `admin`). Senha: `DASH_PASS` do `.env`, ou `dev` se estiver vazia |
+
+Para parar: `Ctrl+C` no terminal. O banco local (`.wrangler/`) e o `.dev.vars` ficam só na sua máquina e são ignorados pelo git. Pagamentos reais só funcionam com credenciais do Mercado Pago no `.env` (use as de teste).
 
 ### 1.9 Comandos
 

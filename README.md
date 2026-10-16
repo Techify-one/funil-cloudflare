@@ -8,6 +8,8 @@ cp .env.example .env      # preencha (veja CLAUDE.md)
 npm run setup -- --demo   # cria banco, publica e configura tudo na Cloudflare
 ```
 
+Para só ver funcionando no seu computador, sem criar contas: `npm install && cp .env.example .env && npm run dev` e abra http://localhost:8787 (painel em `/painel`, usuário `admin`, senha `dev`).
+
 O manual completo (token da Cloudflare com link pronto, chaves necessárias, arquitetura, criação de páginas e campanhas) está no [CLAUDE.md](CLAUDE.md).
 
 Licença: MIT.

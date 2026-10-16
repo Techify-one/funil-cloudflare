@@ -176,7 +176,8 @@ test('módulo site', async (t) => {
     assert.ok(call, 'evento enviado para a CAPI');
     const url = new URL(call.url);
     assert.equal(url.pathname, `/v25.0/${OFFER_PIXEL}/events`);
-    assert.equal(url.searchParams.get('access_token'), 'offer-token');
+    assert.equal(url.searchParams.get('access_token'), null, 'token não vai na URL');
+    assert.equal(JSON.parse(call.body).access_token, 'offer-token');
     const payload = JSON.parse(call.body).data[0];
     assert.equal(payload.event_name, 'InitiateCheckout');
     assert.equal(payload.event_id, 'ic-1');
@@ -196,7 +197,8 @@ test('módulo site', async (t) => {
     for (const call of calls) {
       const url = new URL(call.url);
       assert.equal(url.pathname, `/v25.0/${ENV_PIXEL}/events`);
-      assert.equal(url.searchParams.get('access_token'), 'env-token');
+      assert.equal(url.searchParams.get('access_token'), null);
+      assert.equal(JSON.parse(call.body).access_token, 'env-token');
     }
   });
 
