@@ -1,0 +1,2474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Meta Ads</title>
+<link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet">
+<script src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #111a2e;
+    --panel-2: #0f1627;
+    --border: #1f2a44;
+    --text: #e6ecf5;
+    --muted: #8a95ab;
+    --accent: #3b82f6;
+    --accent-2: #8b5cf6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+  .app {
+    max-width: none;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .header .title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: var(--panel-2); border-color: var(--accent); }
+  .title h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .title .subtitle {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  select, button, input {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+  }
+  select:focus, button:focus, input:focus { border-color: var(--accent); }
+  button {
+    cursor: pointer;
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+    transition: filter 0.15s;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .filters {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1fr) minmax(180px, 1fr) auto;
+    gap: 16px;
+    align-items: end;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  /* ===== Multi-select dropdown (ads) ===== */
+  .multiselect { position: relative; }
+  .ms-trigger {
+    width: 100%;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 34px 8px 12px;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    overflow: hidden;
+  }
+  .ms-trigger:hover { border-color: var(--accent); }
+  .ms-trigger::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: translateY(-70%) rotate(45deg);
+    transition: transform .15s;
+  }
+  .multiselect.open .ms-trigger::after { transform: translateY(-30%) rotate(-135deg); }
+  .ms-trigger .ms-placeholder { color: var(--muted); }
+  .ms-trigger .ms-chips {
+    display: flex; gap: 4px; flex-wrap: nowrap; overflow: hidden;
+    flex: 1; min-width: 0;
+  }
+  .ms-chip {
+    background: rgba(59, 130, 246, .18);
+    color: #bfdbfe;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+  .ms-counter {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  .ms-popover {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 12px 32px -8px rgba(0,0,0,.5);
+    display: none;
+  }
+  .multiselect.open .ms-popover { display: block; }
+
+  .ms-search {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .ms-search:focus { border-color: var(--accent); outline: none; }
+  .ms-toolbar {
+    display: flex; gap: 6px; justify-content: space-between; margin-bottom: 8px;
+    align-items: center;
+  }
+  .ms-toolbar .ms-info { font-size: 11px; color: var(--muted); }
+  .ms-toolbar button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    padding: 4px 10px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .ms-toolbar button:hover { color: var(--text); border-color: var(--accent); }
+
+  .ms-list {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ms-list .ad-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .ms-list .ad-item:hover { background: rgba(255,255,255,0.04); }
+  .ms-list input[type="checkbox"] { accent-color: var(--accent); flex-shrink: 0; }
+  .ms-list .ad-name { font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ms-list .ad-tag { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; flex-shrink: 0; }
+  .ms-list .empty { color: var(--muted); padding: 14px; text-align: center; font-size: 12px; }
+
+  /* ===== Ad on/off switch (Meta-style) ===== */
+  .ad-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    background: #cbd5e1;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background .15s;
+    vertical-align: middle;
+  }
+  .ad-switch.on { background: var(--accent); }
+  .ad-switch::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+    transition: transform .15s;
+  }
+  .ad-switch.on::before { transform: translateX(16px); }
+  .ad-switch:hover:not(:disabled) { filter: brightness(1.08); }
+  .ad-switch:disabled { opacity: 0.55; cursor: wait; }
+  .ad-switch:focus { outline: 2px solid rgba(59, 130, 246, .45); outline-offset: 2px; }
+
+  .ms-list .ad-item .ad-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  tbody td.switch-cell { width: 1%; padding-right: 0; }
+
+  /* ===== Ad thumbnail + hover preview ===== */
+  .ad-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    display: block;
+    cursor: zoom-in;
+  }
+  .ad-thumb-empty {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px dashed var(--border);
+    background: var(--panel-2);
+    display: inline-block;
+  }
+  .creative-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .creative-destination-link {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    text-decoration: none;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .creative-destination-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(59, 130, 246, .12);
+  }
+  .creative-destination-link:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, .45);
+    outline-offset: 2px;
+  }
+  .creative-destination-link svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+  }
+  .thumb-popover {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    padding: 6px;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.65);
+    display: none;
+  }
+  .thumb-popover img {
+    display: block;
+    /* A miniatura da tabela tem 36 px. Define uma largura real (em vez de
+       apenas um máximo) para que o preview seja legível mesmo quando a Meta
+       entrega uma imagem de baixa resolução. Os limites mantêm o popover fora
+       das bordas e sem tomar a tela. */
+    width: min(480px, calc(100vw - 32px));
+    height: auto;
+    max-height: min(560px, calc(100vh - 64px));
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  /* ===== Date filter ===== */
+  .date-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .date-custom { display: none; gap: 6px; }
+  .date-custom.show { display: flex; }
+  .date-custom input[type="date"] {
+    flex: 1;
+    min-width: 0;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    color-scheme: dark;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .card .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .card .value {
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .card.green .value { color: var(--green); }
+  .card.blue .value { color: var(--accent); }
+  .card.purple .value { color: var(--accent-2); }
+  .card.yellow .value { color: var(--yellow); }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel h2 {
+    margin: 0 0 16px 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  /* ===== Tabulator dark theme ===== */
+  .tabulator { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; color: var(--text); }
+  .tabulator .tabulator-header { background: var(--panel-2); border-bottom: 1px solid var(--border); color: var(--muted); }
+  .tabulator .tabulator-header .tabulator-col { background: var(--panel-2); border-right: 1px solid var(--border); }
+  .tabulator .tabulator-header .tabulator-col .tabulator-col-content { padding: 12px 14px; }
+  .tabulator .tabulator-header .tabulator-col-title { color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; font-weight: 600; }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable .tabulator-col-title { padding-right: 18px; }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable:hover,
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable.tabulator-col-sorter-element:hover { background-color: rgba(255,255,255,0.04) !important; color: var(--text); }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort="ascending"] .tabulator-col-title,
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort="descending"] .tabulator-col-title { color: var(--text); }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort="ascending"] .tabulator-arrow { border-bottom-color: var(--accent); border-top: none; }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort="descending"] .tabulator-arrow { border-top-color: var(--accent); border-bottom: none; }
+  .tabulator .tabulator-header .tabulator-col.tabulator-sortable[aria-sort="none"] .tabulator-arrow { border-bottom-color: var(--muted); opacity: 0.4; }
+  /* ROW: ignora qualquer hover/selected/range. Cor fica fixa segundo paridade. */
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row:hover,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-selectable:hover,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-selected,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-selected:hover,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-range-highlight,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-range-selected { background-color: var(--panel) !important; color: var(--text) !important; border-bottom: 1px solid var(--border); cursor: default !important; }
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even:hover,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even.tabulator-selectable:hover,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even.tabulator-selected,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-row-even.tabulator-selected:hover { background-color: var(--panel-2) !important; color: var(--text) !important; }
+  /* CELL: nunca recebe background próprio */
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row .tabulator-cell,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row:hover .tabulator-cell,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-selected .tabulator-cell,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-range-highlight .tabulator-cell,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-range-selected .tabulator-cell { background-color: transparent !important; color: var(--text) !important; }
+  .tabulator-col-resize-handle:hover { background-color: var(--accent); }
+  .tabulator .tabulator-cell { padding: 12px 14px; font-size: 13px; border-right: none; }
+  .tabulator .tabulator-tableholder { background: var(--panel); }
+  .tabulator .tabulator-footer { background-color: var(--panel-2) !important; border-top: 2px solid var(--border); color: var(--text); padding: 0; }
+  .tabulator .tabulator-footer .tabulator-calcs-holder { background-color: var(--panel-2) !important; border-top: 1px solid var(--border) !important; border-bottom: none !important; }
+  .tabulator .tabulator-footer .tabulator-calcs-holder .tabulator-row { background-color: var(--panel-2) !important; color: var(--text) !important; font-weight: 700; }
+  .tabulator .tabulator-footer .tabulator-calcs-holder .tabulator-row .tabulator-cell { background-color: transparent !important; color: var(--text) !important; font-weight: 700; }
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-calcs,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-calcs.tabulator-calcs-top,
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-calcs.tabulator-calcs-bottom { background-color: var(--panel-2) !important; color: var(--text) !important; font-weight: 700; border-top: 2px solid var(--border) !important; border-bottom: 2px solid var(--border) !important; }
+  .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.tabulator-calcs .tabulator-cell { background-color: transparent !important; color: var(--text) !important; font-weight: 700; }
+  .tabulator .tabulator-header .tabulator-calcs-holder { background-color: var(--panel-2) !important; border-bottom: 1px solid var(--border) !important; border-top: 1px solid var(--border) !important; }
+  .tabulator .tabulator-header .tabulator-calcs-holder .tabulator-row { background-color: var(--panel-2) !important; color: var(--text) !important; }
+  .tabulator .tabulator-header-filter input,
+  .tabulator .tabulator-header-filter textarea { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 12px; }
+  .tabulator .tabulator-header-filter input:focus { border-color: var(--accent); outline: none; }
+  .tabulator-menu { background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); padding: 4px 0; }
+  .tabulator-menu .tabulator-menu-item { padding: 8px 14px; font-size: 13px; color: var(--text); }
+  .tabulator-menu .tabulator-menu-item:not(.tabulator-menu-item-disabled):hover { background: rgba(59, 130, 246, 0.18); color: var(--text); }
+  .tabulator-col-resize-handle { width: 6px; }
+  .tabulator-headers .tabulator-col.tabulator-moving { background: rgba(59, 130, 246, 0.25) !important; }
+  .hide-internal-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .hide-internal-toggle:hover { border-color: var(--accent); }
+  .hide-internal-toggle input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+    margin: 0;
+  }
+  .status {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status.error { color: var(--red); }
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  @media (max-width: 900px) {
+    .filters { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="title">
+      <a href="/dashboard" class="back-btn" title="Voltar ao dashboard" aria-label="Voltar ao dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      </a>
+      <div class="logo">M</div>
+      <div>
+        <h1>Dashboard Meta Ads</h1>
+        <div class="subtitle">Campanhas & Anúncios, Graph API</div>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="hide-internal-toggle" title="Esconder vendas vindas de IPs internos/teste configurados em /dashboard">
+        <input id="hide-internal" type="checkbox" checked>
+        <span>Esconder Leads de IPs de Teste</span>
+      </label>
+      <span id="status" class="status"></span>
+      <button id="refresh">Atualizar</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="field">
+      <label>Contas de anúncios (1 ou mais)</label>
+      <div id="accountsSelect" class="multiselect">
+        <button type="button" id="accountTrigger" class="ms-trigger" aria-expanded="false">
+          <span id="accountSummary" class="ms-placeholder">Carregando contas...</span>
+        </button>
+        <div class="ms-popover" role="dialog">
+          <input id="accountSearch" type="search" class="ms-search" placeholder="Filtrar contas…" />
+          <div class="ms-toolbar">
+            <span id="accountInfo" class="ms-info">0 selecionado(s)</span>
+            <div style="display:flex;gap:6px;">
+              <button type="button" id="accountSelectAll">Selecionar todas</button>
+              <button type="button" id="accountClearAll">Limpar</button>
+            </div>
+          </div>
+          <div id="accountsList" class="ms-list">
+            <div class="empty">Carregando contas…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Campanhas (1 ou mais)</label>
+      <div id="campaignsSelect" class="multiselect">
+        <button type="button" id="campaignTrigger" class="ms-trigger" aria-expanded="false" disabled>
+          <span id="campaignSummary" class="ms-placeholder">Selecione uma conta primeiro</span>
+        </button>
+        <div class="ms-popover" role="dialog">
+          <input id="campaignSearch" type="search" class="ms-search" placeholder="Filtrar campanhas…" />
+          <div class="ms-toolbar">
+            <span id="campaignInfo" class="ms-info">0 selecionado(s)</span>
+            <div style="display:flex;gap:6px;">
+              <button type="button" id="campaignSelectAll">Selecionar todas</button>
+              <button type="button" id="campaignClearAll">Limpar</button>
+            </div>
+          </div>
+          <div id="campaignsList" class="ms-list">
+            <div class="empty">Selecione uma conta primeiro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Conjuntos de anúncios (1 ou mais)</label>
+      <div id="adsetsSelect" class="multiselect">
+        <button type="button" id="adsetTrigger" class="ms-trigger" aria-expanded="false" disabled>
+          <span id="adsetSummary" class="ms-placeholder">Selecione uma campanha primeiro</span>
+        </button>
+        <div class="ms-popover" role="dialog">
+          <input id="adsetSearch" type="search" class="ms-search" placeholder="Filtrar conjuntos…" />
+          <div class="ms-toolbar">
+            <span id="adsetInfo" class="ms-info">0 selecionado(s)</span>
+            <div style="display:flex;gap:6px;">
+              <button type="button" id="adsetSelectAll">Selecionar todos</button>
+              <button type="button" id="adsetClearAll">Limpar</button>
+            </div>
+          </div>
+          <div id="adsetsList" class="ms-list">
+            <div class="empty">Selecione uma campanha primeiro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Selecionar anúncios (1 ou mais)</label>
+      <div id="adsSelect" class="multiselect">
+        <button type="button" id="msTrigger" class="ms-trigger" aria-expanded="false">
+          <span id="msSummary" class="ms-placeholder">Selecione uma campanha primeiro</span>
+        </button>
+        <div class="ms-popover" role="dialog">
+          <input id="msSearch" type="search" class="ms-search" placeholder="Filtrar anúncios…" />
+          <div class="ms-toolbar">
+            <span id="msInfo" class="ms-info">0 selecionado(s)</span>
+            <div style="display:flex;gap:6px;">
+              <button type="button" id="selectAll">Selecionar todos</button>
+              <button type="button" id="clearAll">Limpar</button>
+            </div>
+          </div>
+          <div id="adsList" class="ms-list">
+            <div class="empty">Selecione uma campanha primeiro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="datePreset">Filtro de data</label>
+      <div class="date-wrap">
+        <select id="datePreset">
+          <option value="today">Hoje</option>
+          <option value="yesterday">Ontem</option>
+          <option value="last_7d" selected>Últimos 7 dias</option>
+          <option value="last_30d">Últimos 30 dias</option>
+          <option value="last_year">Último ano</option>
+          <option value="__day">Dia específico…</option>
+          <option value="__range">Intervalo personalizado…</option>
+        </select>
+        <div id="dateDay" class="date-custom">
+          <input type="date" id="dateSingle" />
+        </div>
+        <div id="dateRange" class="date-custom">
+          <input type="date" id="dateFrom" />
+          <input type="date" id="dateTo" />
+        </div>
+      </div>
+    </div>
+    <div class="field" style="display:none;">
+      <label>&nbsp;</label>
+      <button id="apply">Aplicar</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card blue">
+      <div class="label">Anúncios</div>
+      <div class="value" id="kpi-ads">0</div>
+    </div>
+    <div class="card green">
+      <div class="label">Gasto Total</div>
+      <div class="value" id="kpi-spend">R$ 0,00</div>
+    </div>
+    <div class="card purple">
+      <div class="label">Cliques no link</div>
+      <div class="value" id="kpi-clicks">0</div>
+    </div>
+    <div class="card yellow">
+      <div class="label">Impressões</div>
+      <div class="value" id="kpi-impressions">0</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Desempenho por anúncio</h2>
+    <div id="tableWrap">
+      <div class="empty-state">Selecione uma campanha e os anúncios.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================= CONFIG =======================
+// Insights/campanhas/ads vêm do backend (módulo dashboard do worker), NÃO direto do
+// graph.facebook.com, senão a Tracking Prevention de Edge/Brave/Firefox bloqueia as
+// requests pro Facebook e o gasto não carrega. Token e ad account ficam no worker.
+
+// ======================= STATE =======================
+const state = {
+  accounts: [],
+  selectedAccountIds: new Set(),
+  campaigns: [],   // união das contas selecionadas; cada campanha leva _account_id
+  adsets: [],      // união das campanhas selecionadas; cada conjunto leva _campaign_id/_account_id
+  ads: [],         // união das campanhas selecionadas; cada anúncio leva _campaign_id/_account_id
+  selectedCampaignIds: new Set(),
+  selectedAdsetIds: new Set(),
+  selectedAdIds: new Set(),
+  insights: []
+};
+
+// ===== Table column config (persistido em D1 via /dashboard/api/meta/table-config) =====
+let metaTableConfig = null;
+let metaTableConfigSaveTimer = null;
+
+async function loadTableConfig() {
+  try {
+    const r = await fetch("/dashboard/api/meta/table-config", { credentials: "same-origin" });
+    if (r.ok) {
+      const data = await r.json();
+      if (data && typeof data === "object" && !Array.isArray(data)) metaTableConfig = data;
+    }
+  } catch (e) {}
+  if (!metaTableConfig) metaTableConfig = {};
+
+  // Configurações antigas guardam apenas as colunas que existiam quando foram
+  // salvas. Inclui o CPM explicitamente para ele aparecer também para quem já
+  // personalizou a tabela, preservando a ordem e as larguras das demais colunas.
+  if (Array.isArray(metaTableConfig.columns)
+      && !metaTableConfig.columns.some(col => col && col.field === "cpm")) {
+    const impressionsIndex = metaTableConfig.columns.findIndex(col => col && col.field === "impressions");
+    const insertAt = impressionsIndex >= 0 ? impressionsIndex + 1 : metaTableConfig.columns.length;
+    metaTableConfig.columns.splice(insertAt, 0, { title: "CPM", field: "cpm", visible: true });
+    scheduleConfigSave();
+  }
+
+  // A coluna antes guardava só a miniatura (60 px). Reserva espaço pro novo
+  // atalho de destino também nas preferências que já estavam persistidas.
+  if (Array.isArray(metaTableConfig.columns)) {
+    const creativeColumn = metaTableConfig.columns.find(col => col && col.field === "thumb_small");
+    if (creativeColumn && Number(creativeColumn.width || 0) < 90) {
+      creativeColumn.width = 90;
+      scheduleConfigSave();
+    }
+  }
+}
+
+function sendConfigSave(useKeepalive) {
+  return fetch("/dashboard/api/meta/table-config", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(metaTableConfig || {}),
+    keepalive: !!useKeepalive
+  }).catch(() => {});
+}
+function scheduleConfigSave() {
+  if (metaTableConfigSaveTimer) clearTimeout(metaTableConfigSaveTimer);
+  metaTableConfigSaveTimer = setTimeout(() => {
+    metaTableConfigSaveTimer = null;
+    sendConfigSave(false);
+  }, 250);
+}
+function flushConfigSave() {
+  if (!metaTableConfigSaveTimer) return;
+  clearTimeout(metaTableConfigSaveTimer);
+  metaTableConfigSaveTimer = null;
+  sendConfigSave(true);
+}
+window.addEventListener("pagehide", flushConfigSave);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") flushConfigSave();
+});
+
+function tableConfigReader(_id, type) {
+  if (!metaTableConfig) return false;
+  const v = metaTableConfig[type];
+  return (v === undefined || v === null) ? false : v;
+}
+function tableConfigWriter(_id, type, data) {
+  if (!metaTableConfig) metaTableConfig = {};
+  metaTableConfig[type] = data;
+  scheduleConfigSave();
+}
+
+// ======================= DOM =======================
+const $ = (id) => document.getElementById(id);
+const accountsSelectEl = $("accountsSelect");
+const accountTriggerEl = $("accountTrigger");
+const accountSummaryEl = $("accountSummary");
+const accountSearchEl = $("accountSearch");
+const accountInfoEl = $("accountInfo");
+const accountsListEl = $("accountsList");
+const accountSelectAllBtn = $("accountSelectAll");
+const accountClearAllBtn = $("accountClearAll");
+const campaignsSelectEl = $("campaignsSelect");
+const campaignTriggerEl = $("campaignTrigger");
+const campaignSummaryEl = $("campaignSummary");
+const campaignSearchEl = $("campaignSearch");
+const campaignInfoEl = $("campaignInfo");
+const campaignsListEl = $("campaignsList");
+const campaignSelectAllBtn = $("campaignSelectAll");
+const campaignClearAllBtn = $("campaignClearAll");
+const adsetsSelectEl = $("adsetsSelect");
+const adsetTriggerEl = $("adsetTrigger");
+const adsetSummaryEl = $("adsetSummary");
+const adsetSearchEl = $("adsetSearch");
+const adsetInfoEl = $("adsetInfo");
+const adsetsListEl = $("adsetsList");
+const adsetSelectAllBtn = $("adsetSelectAll");
+const adsetClearAllBtn = $("adsetClearAll");
+const adsSelectEl = $("adsSelect");
+const msTriggerEl = $("msTrigger");
+const msSummaryEl = $("msSummary");
+const msSearchEl = $("msSearch");
+const msInfoEl = $("msInfo");
+const adsListEl = $("adsList");
+const datePresetEl = $("datePreset");
+const dateDayEl = $("dateDay");
+const dateRangeEl = $("dateRange");
+const dateSingleEl = $("dateSingle");
+const dateFromEl = $("dateFrom");
+const dateToEl = $("dateTo");
+const applyBtn = $("apply");
+const refreshBtn = $("refresh");
+const selectAllBtn = $("selectAll");
+const clearAllBtn = $("clearAll");
+const statusEl = $("status");
+const hideInternalEl = $("hide-internal");
+
+// ===== Hide internal IPs toggle (compartilhado com /funil via mesma chave) =====
+const HIDE_INTERNAL_KEY = "hide_internal";
+(function initHideInternal() {
+  try {
+    const stored = localStorage.getItem(HIDE_INTERNAL_KEY);
+    if (stored !== null) hideInternalEl.checked = stored === "1";
+  } catch (e) {}
+  hideInternalEl.addEventListener("change", () => {
+    saveFilters(); // reflete na URL + localStorage
+    if (state.selectedAdIds.size > 0) loadInsights();
+  });
+})();
+
+// state for ads filter
+let adsSearchTerm = "";
+let adsetSearchTerm = "";
+let accountSearchTerm = "";
+let campaignSearchTerm = "";
+
+// ===== Auto-apply (substitui o botão "Aplicar") =====
+let autoApplyTimer = null;
+function autoApply(delay = 500) {
+  if (state.selectedCampaignIds.size === 0) return;
+  if (state.selectedAdIds.size === 0) {
+    state.insights = [];
+    renderTable();
+    renderKpis();
+    return;
+  }
+  if (autoApplyTimer) clearTimeout(autoApplyTimer);
+  autoApplyTimer = setTimeout(() => {
+    autoApplyTimer = null;
+    loadInsights();
+  }, delay);
+}
+
+// ======================= PERSISTENCE =======================
+// Fonte de verdade = query string da URL (compartilhável + sobrevive ao bloqueio de
+// storage do Edge). localStorage é mantido só como fallback/compat e p/ o hide_internal
+// compartilhado com /funil.
+const STORAGE_KEY = "metaDashboardFilters_v1";
+
+// Lê os filtros da URL atual.
+function readUrlFilters() {
+  const p = new URL(location.href).searchParams;
+  const list = (k) => { const v = p.get(k); return v ? v.split(",").filter(Boolean) : []; };
+  // compat: aceita as chaves antigas singulares (account/campaign) se as novas (plural) faltarem
+  const accountIds = list("accounts");
+  const campaignIds = list("campaigns");
+  const legacyAccount = p.get("account");
+  const legacyCampaign = p.get("campaign");
+  return {
+    accountIds: accountIds.length ? accountIds : (legacyAccount ? [legacyAccount] : []),
+    campaignIds: campaignIds.length ? campaignIds : (legacyCampaign ? [legacyCampaign] : []),
+    adsetIds: list("adsets"),
+    adIds: list("ads"),
+    datePreset: p.get("date") || "",
+    dateSingle: p.get("day") || "",
+    dateFrom: p.get("from") || "",
+    dateTo: p.get("to") || "",
+    hideInternal: p.get("internal") // "1" | "0" | null
+  };
+}
+
+function saveFilters() {
+  // 1) materializa TODOS os filtros usados na URL (replaceState = sem poluir o histórico)
+  try {
+    const p = new URLSearchParams();
+    if (state.selectedAccountIds.size) p.set("accounts", Array.from(state.selectedAccountIds).join(","));
+    if (state.selectedCampaignIds.size) p.set("campaigns", Array.from(state.selectedCampaignIds).join(","));
+    if (state.selectedAdsetIds.size) p.set("adsets", Array.from(state.selectedAdsetIds).join(","));
+    if (state.selectedAdIds.size) p.set("ads", Array.from(state.selectedAdIds).join(","));
+    if (datePresetEl.value) p.set("date", datePresetEl.value);
+    if (datePresetEl.value === "__day" && dateSingleEl.value) p.set("day", dateSingleEl.value);
+    if (datePresetEl.value === "__range") {
+      if (dateFromEl.value) p.set("from", dateFromEl.value);
+      if (dateToEl.value) p.set("to", dateToEl.value);
+    }
+    p.set("internal", hideInternalEl.checked ? "1" : "0");
+    const qs = p.toString();
+    history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+  } catch (e) {}
+  // 2) fallback localStorage (best-effort, pode falhar em storage bloqueado)
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      accountIds: Array.from(state.selectedAccountIds),
+      campaignIds: Array.from(state.selectedCampaignIds),
+      adsetIds: Array.from(state.selectedAdsetIds),
+      adIds: Array.from(state.selectedAdIds),
+      datePreset: datePresetEl.value,
+      dateSingle: dateSingleEl.value,
+      dateFrom: dateFromEl.value,
+      dateTo: dateToEl.value
+    }));
+    localStorage.setItem(HIDE_INTERNAL_KEY, hideInternalEl.checked ? "1" : "0");
+  } catch (e) {}
+}
+
+function loadFilters() {
+  // URL tem prioridade quando há qualquer query string
+  if (location.search && location.search.length > 1) return readUrlFilters();
+  // fallback localStorage
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const ls = raw ? JSON.parse(raw) : {};
+    return {
+      accountIds: ls.accountIds || [],
+      campaignIds: ls.campaignIds || (ls.campaignId ? [ls.campaignId] : []),
+      adsetIds: ls.adsetIds || [],
+      adIds: ls.adIds || [],
+      datePreset: ls.datePreset || "",
+      dateSingle: ls.dateSingle || "",
+      dateFrom: ls.dateFrom || "",
+      dateTo: ls.dateTo || "",
+      hideInternal: null
+    };
+  } catch (e) { return readUrlFilters(); }
+}
+
+// ======================= HELPERS =======================
+function setStatus(msg, isError = false, loading = false) {
+  if (!msg) { statusEl.innerHTML = ""; return; }
+  const spinner = loading ? '<span class="spinner"></span>' : "";
+  statusEl.innerHTML = spinner + escapeHtml(msg);
+  statusEl.className = "status" + (isError ? " error" : "");
+}
+
+function fmtBRL(v) {
+  const n = Number(v) || 0;
+  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+function fmtInt(v) {
+  const n = Number(v) || 0;
+  return n.toLocaleString("pt-BR");
+}
+function fmtPct(v) {
+  const n = Number(v) || 0;
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%";
+}
+
+// Lê uma edge da Meta via backend (paginação feita no worker). Devolve o array `data`.
+async function metaApi(endpoint, params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`/dashboard/api/meta/${endpoint}${qs ? "?" + qs : ""}`, { credentials: "same-origin" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+  return data.data || [];
+}
+
+// Pausa/ativa campanha ou ad via backend.
+async function metaSetStatus(objectId, status) {
+  const res = await fetch(`/dashboard/api/meta/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({ object_id: objectId, status })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ===== Estado de entrega (Meta) =====
+// O switch precisa refletir a ENTREGA REAL (effective_status), não só o status
+// próprio do objeto. Ex.: um anúncio com status=ACTIVE mas com o conjunto pausado
+// tem effective_status=ADSET_PAUSED e NÃO está entregando, a Meta mostra "Off".
+function prettyEffStatus(s) {
+  switch (s) {
+    case "ACTIVE": return "Ativo";
+    case "PAUSED": return "Pausado";
+    case "ADSET_PAUSED": return "Conjunto pausado";
+    case "CAMPAIGN_PAUSED": return "Campanha pausada";
+    case "DISAPPROVED": return "Reprovado";
+    case "PENDING_REVIEW": return "Em análise";
+    case "PREAPPROVED": return "Pré-aprovado";
+    case "PENDING_BILLING_INFO": return "Faturamento pendente";
+    case "WITH_ISSUES": return "Com problemas";
+    case "IN_PROCESS": return "Processando";
+    case "ARCHIVED": return "Arquivado";
+    case "DELETED": return "Excluído";
+    default: return s || "–";
+  }
+}
+
+// Estado de entrega de UM objeto isolado (sem olhar a hierarquia).
+//   on           -> está entregando (effective_status === ACTIVE)
+//   controllable -> o toggle do próprio objeto muda a entrega (só quando o estado
+//                   efetivo é ACTIVE ou PAUSED, i.e. nada nele mesmo bloqueando)
+//   label        -> rótulo legível do motivo (pra tag/tooltip quando off)
+function deliveryState(obj) {
+  // Fallback p/ respostas antigas sem effective_status: usa o status próprio.
+  const e = (obj && obj.effective_status) || (obj && obj.status) || "";
+  if (e === "ACTIVE") return { on: true, controllable: true, label: "Ativo" };
+  if (e === "PAUSED") return { on: false, controllable: true, label: "Pausado" };
+  return { on: false, controllable: false, label: prettyEffStatus(e) };
+}
+
+// Estado "próprio" do objeto pra ser usado como FOLHA da hierarquia: quando se
+// chega aqui, todos os pais já foram confirmados entregando, então um
+// ADSET_PAUSED/CAMPAIGN_PAUSED remanescente no effective_status é resíduo (stale)
+// de antes de reativar o pai, nesse caso vale o status próprio do objeto. Isso
+// preserva estados legítimos de nível-folha (PAUSED, DISAPPROVED, etc.).
+function ownState(obj) {
+  let e = (obj && obj.effective_status) || (obj && obj.status) || "";
+  if (e === "ADSET_PAUSED" || e === "CAMPAIGN_PAUSED") e = (obj && obj.status) || "ACTIVE";
+  if (e === "ACTIVE") return { on: true, controllable: true, label: "Ativo" };
+  if (e === "PAUSED") return { on: false, controllable: true, label: "Pausado" };
+  return { on: false, controllable: false, label: prettyEffStatus(e) };
+}
+
+// Se um nível-pai (já avaliado em `deliv`) não está entregando, o filho herda esse
+// bloqueio: o toggle do próprio filho NÃO muda a entrega (ex.: ativar um anúncio
+// com a campanha pausada não faz ele rodar). Retorna o estado herdado, ou null se
+// o pai está entregando.
+// CUIDADO: a Meta reporta effective_status=PAUSED no anúncio quando ELE está
+// pausado, mesmo que a campanha/conjunto também estejam, por isso não dá pra
+// confiar só no effective_status do anúncio; tem que olhar os pais aqui.
+function blockFrom(deliv, pausedLabel) {
+  if (!deliv || deliv.on) return null;
+  return { on: false, controllable: false, label: deliv.controllable ? pausedLabel : deliv.label };
+}
+
+// Estado de entrega de um CONJUNTO considerando a campanha-pai.
+function adsetDeliveryState(adset) {
+  const camp = state.campaigns.find(c => c.id === (adset._campaign_id || adset.campaign_id));
+  return blockFrom(camp ? deliveryState(camp) : null, "Campanha pausada")
+      || ownState(adset);
+}
+
+// Estado de entrega de um ANÚNCIO considerando campanha + conjunto (hierarquia).
+function adDeliveryState(ad) {
+  const camp = state.campaigns.find(c => c.id === (ad._campaign_id || ad.campaign_id));
+  const adset = state.adsets.find(s => s.id === ad.adset_id);
+  return blockFrom(camp ? deliveryState(camp) : null, "Campanha pausada")
+      || blockFrom(adset ? adsetDeliveryState(adset) : null, "Conjunto pausado")
+      || ownState(ad);
+}
+
+const togglingAdIds = new Set();
+const togglingCampaignIds = new Set();
+const togglingAdsetIds = new Set();
+
+async function toggleCampaignStatus(campaignId, newStatus) {
+  if (togglingCampaignIds.has(campaignId)) return;
+  const camp = state.campaigns.find(c => c.id === campaignId);
+  if (!camp) return;
+  if (newStatus === "PAUSED" && !confirm(`Pausar a campanha "${camp.name}"?`)) return;
+
+  togglingCampaignIds.add(campaignId);
+  renderCampaigns();
+  setStatus(`${newStatus === "PAUSED" ? "Pausando" : "Ativando"} campanha "${camp.name}"...`, false, true);
+  try {
+    await metaSetStatus(campaignId, newStatus);
+    camp.status = newStatus;
+    camp.effective_status = newStatus;
+    setStatus(`Campanha ${newStatus === "PAUSED" ? "pausada" : "ativada"}: "${camp.name}".`);
+  } catch (e) {
+    setStatus("Erro ao alterar status da campanha: " + e.message, true);
+  } finally {
+    togglingCampaignIds.delete(campaignId);
+    renderCampaigns();
+    renderAdsets();
+    renderAds();
+    renderTable();
+  }
+}
+
+async function toggleAdsetStatus(adsetId, newStatus) {
+  if (togglingAdsetIds.has(adsetId)) return;
+  const adset = state.adsets.find(s => s.id === adsetId);
+  if (!adset) return;
+  if (newStatus === "PAUSED" && !confirm(`Pausar o conjunto "${adset.name}"?`)) return;
+
+  togglingAdsetIds.add(adsetId);
+  renderAdsets();
+  setStatus(`${newStatus === "PAUSED" ? "Pausando" : "Ativando"} conjunto "${adset.name}"...`, false, true);
+  try {
+    await metaSetStatus(adsetId, newStatus);
+    adset.status = newStatus;
+    adset.effective_status = newStatus;
+    // Os anúncios-filhos não mudam de status próprio, mas a entrega deles depende
+    // deste conjunto, re-renderiza pra refletir (a lógica de hierarquia já trata
+    // o effective_status "stale" dos filhos).
+    setStatus(`Conjunto ${newStatus === "PAUSED" ? "pausado" : "ativado"}: "${adset.name}".`);
+  } catch (e) {
+    setStatus("Erro ao alterar status do conjunto: " + e.message, true);
+  } finally {
+    togglingAdsetIds.delete(adsetId);
+    renderAdsets();
+    renderAds();
+    renderTable();
+  }
+}
+
+async function toggleAdStatus(adId, newStatus) {
+  if (togglingAdIds.has(adId)) return;
+  const ad = state.ads.find(a => a.id === adId);
+  if (!ad) return;
+  if (newStatus === "PAUSED" && !confirm(`Pausar o anúncio "${ad.name}"?`)) return;
+
+  togglingAdIds.add(adId);
+  renderAds();
+  renderTable();
+  setStatus(`${newStatus === "PAUSED" ? "Pausando" : "Ativando"} "${ad.name}"...`, false, true);
+  try {
+    await metaSetStatus(adId, newStatus);
+    ad.status = newStatus;
+    ad.effective_status = newStatus;
+    setStatus(`${newStatus === "PAUSED" ? "Pausado" : "Ativado"}: "${ad.name}".`);
+  } catch (e) {
+    setStatus("Erro ao alterar status: " + e.message, true);
+  } finally {
+    togglingAdIds.delete(adId);
+    renderAds();
+    renderTable();
+  }
+}
+
+// ======================= DATA LOADERS =======================
+async function loadAccounts(saved) {
+  try {
+    const accounts = await metaApi("accounts");
+    state.accounts = accounts;
+    // prioridade: contas salvas (URL/localStorage) > escolha persistida no D1 > 1ª da lista
+    let wanted = (saved && saved.accountIds && saved.accountIds.length) ? saved.accountIds : null;
+    if (!wanted && metaTableConfig) {
+      if (Array.isArray(metaTableConfig.account_ids) && metaTableConfig.account_ids.length) wanted = metaTableConfig.account_ids;
+      else if (metaTableConfig.account_id) wanted = [metaTableConfig.account_id];
+    }
+    const valid = (wanted || []).filter(id => accounts.some(a => a.id === id));
+    if (valid.length) state.selectedAccountIds = new Set(valid);
+    else if (accounts[0]) state.selectedAccountIds = new Set([accounts[0].id]);
+    else state.selectedAccountIds = new Set();
+    renderAccounts();
+  } catch (e) {
+    setStatus("Erro ao carregar contas: " + e.message, true);
+    accountsListEl.innerHTML = '<div class="empty">(erro)</div>';
+  }
+}
+
+function renderAccounts() {
+  accountsListEl.innerHTML = "";
+  if (state.accounts.length === 0) {
+    accountsListEl.innerHTML = '<div class="empty">(nenhuma conta)</div>';
+    accountTriggerEl.disabled = true;
+    renderAccountsSummary();
+    return;
+  }
+  accountTriggerEl.disabled = false;
+
+  const term = (accountSearchTerm || "").trim().toLowerCase();
+  const filtered = term
+    ? state.accounts.filter(a => ((a.name || "") + " " + (a.id || "")).toLowerCase().includes(term))
+    : state.accounts;
+
+  if (filtered.length === 0) {
+    accountsListEl.innerHTML = '<div class="empty">Nenhuma conta corresponde à busca</div>';
+    renderAccountsSummary();
+    return;
+  }
+
+  for (const acc of filtered) {
+    const item = document.createElement("label");
+    item.className = "ad-item";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = acc.id;
+    cb.checked = state.selectedAccountIds.has(acc.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.selectedAccountIds.add(acc.id);
+      else state.selectedAccountIds.delete(acc.id);
+      renderAccountsSummary();
+      persistAccountChoice();
+      onAccountsChanged();
+    });
+    const name = document.createElement("span");
+    name.className = "ad-name";
+    const label = (acc.name || acc.id) + " (" + acc.id + ")";
+    name.textContent = label;
+    name.title = label;
+    item.appendChild(cb);
+    item.appendChild(name);
+    accountsListEl.appendChild(item);
+  }
+  renderAccountsSummary();
+}
+
+function renderAccountsSummary() {
+  const total = state.accounts.length;
+  const count = state.selectedAccountIds.size;
+  accountInfoEl.textContent = total > 0
+    ? `${count} de ${total} selecionada(s)`
+    : "0 selecionado(s)";
+
+  if (total === 0) {
+    accountSummaryEl.className = "ms-placeholder";
+    accountSummaryEl.innerHTML = "Nenhuma conta disponível";
+    return;
+  }
+  if (count === 0) {
+    accountSummaryEl.className = "ms-placeholder";
+    accountSummaryEl.innerHTML = "Selecione uma conta";
+    return;
+  }
+  const selected = state.accounts.filter(a => state.selectedAccountIds.has(a.id));
+  const maxChips = 2;
+  const chips = selected.slice(0, maxChips).map(a =>
+    `<span class="ms-chip">${escapeHtml(a.name || a.id)}</span>`
+  ).join("");
+  const extra = count > maxChips ? `<span class="ms-counter">+${count - maxChips}</span>` : "";
+  accountSummaryEl.className = "ms-chips";
+  accountSummaryEl.innerHTML = chips + extra;
+}
+
+// Persiste a escolha de contas no D1 (mesmo blob do table-config) + URL/localStorage.
+function persistAccountChoice() {
+  if (!metaTableConfig) metaTableConfig = {};
+  metaTableConfig.account_ids = Array.from(state.selectedAccountIds);
+  delete metaTableConfig.account_id; // limpa chave antiga (single)
+  scheduleConfigSave();
+  saveFilters();
+}
+
+// Troca de conta(s): recarrega campanhas (união), reconcilia seleção e recarrega conjuntos/anúncios.
+let accountsChangeTimer = null;
+function onAccountsChanged(delay = 300) {
+  if (accountsChangeTimer) clearTimeout(accountsChangeTimer);
+  accountsChangeTimer = setTimeout(async () => {
+    accountsChangeTimer = null;
+    await loadCampaigns();
+    const existing = new Set(state.campaigns.map(c => c.id));
+    state.selectedCampaignIds = new Set(Array.from(state.selectedCampaignIds).filter(id => existing.has(id)));
+    renderCampaigns();
+    await reloadAdsetsAndAds();
+    const existingAdsets = new Set(state.adsets.map(a => a.id));
+    state.selectedAdsetIds = new Set(Array.from(state.selectedAdsetIds).filter(id => existingAdsets.has(id)));
+    state.selectedAdIds = new Set(getVisibleAds().map(a => a.id));
+    renderAdsets();
+    renderAds();
+    saveFilters();
+    autoApply(0);
+  }, delay);
+}
+
+async function loadCampaigns() {
+  const accountIds = Array.from(state.selectedAccountIds);
+  if (accountIds.length === 0) {
+    state.campaigns = [];
+    renderCampaigns();
+    return;
+  }
+  setStatus("Carregando campanhas...", false, true);
+  try {
+    const lists = await Promise.all(accountIds.map(async (acc) => {
+      const camps = await metaApi("campaigns", { account_id: acc });
+      return camps.map(c => ({ ...c, _account_id: acc }));
+    }));
+    state.campaigns = lists.flat();
+    renderCampaigns();
+    setStatus("");
+  } catch (e) {
+    setStatus("Erro ao carregar campanhas: " + e.message, true);
+    state.campaigns = [];
+    renderCampaigns();
+  }
+}
+
+// Troca de campanha(s): recarrega conjuntos/anúncios das campanhas selecionadas e reaplica.
+let campaignsChangeTimer = null;
+function onCampaignsChanged(delay = 250) {
+  if (campaignsChangeTimer) clearTimeout(campaignsChangeTimer);
+  campaignsChangeTimer = setTimeout(async () => {
+    campaignsChangeTimer = null;
+    await reloadAdsetsAndAds();
+    const existingAdsets = new Set(state.adsets.map(a => a.id));
+    state.selectedAdsetIds = new Set(Array.from(state.selectedAdsetIds).filter(id => existingAdsets.has(id)));
+    state.selectedAdIds = new Set(getVisibleAds().map(a => a.id));
+    renderAdsets();
+    renderAds();
+    saveFilters();
+    autoApply(0);
+  }, delay);
+}
+
+async function reloadAdsetsAndAds() {
+  await Promise.all([loadAdsets(), loadAds()]);
+}
+
+async function loadAdsets() {
+  const campIds = Array.from(state.selectedCampaignIds);
+  if (campIds.length === 0) {
+    state.adsets = [];
+    renderAdsets();
+    return;
+  }
+  try {
+    const lists = await Promise.all(campIds.map(async (cid) => {
+      const camp = state.campaigns.find(c => c.id === cid);
+      const adsets = await metaApi("adsets", { campaign_id: cid });
+      return adsets.map(a => ({ ...a, _campaign_id: cid, _account_id: camp ? camp._account_id : "" }));
+    }));
+    state.adsets = lists.flat();
+    renderAdsets();
+  } catch (e) {
+    state.adsets = [];
+    renderAdsets();
+    setStatus("Erro ao carregar conjuntos: " + e.message, true);
+  }
+}
+
+async function loadAds() {
+  const campIds = Array.from(state.selectedCampaignIds);
+  if (campIds.length === 0) {
+    state.ads = [];
+    renderAds();
+    return;
+  }
+  setStatus("Carregando anúncios...", false, true);
+  try {
+    const lists = await Promise.all(campIds.map(async (cid) => {
+      const camp = state.campaigns.find(c => c.id === cid);
+      const ads = await metaApi("ads", { campaign_id: cid, account_id: camp ? camp._account_id : "" });
+      return ads.map(a => ({ ...a, _campaign_id: cid, _account_id: camp ? camp._account_id : "" }));
+    }));
+    state.ads = lists.flat();
+    state.selectedAdIds = new Set(getVisibleAds().map(a => a.id)); // pre-select all visíveis
+    renderAds();
+    setStatus("");
+  } catch (e) {
+    setStatus("Erro ao carregar anúncios: " + e.message, true);
+    state.ads = [];
+    renderAds();
+  }
+}
+
+function getVisibleAds() {
+  if (state.selectedAdsetIds.size === 0) return state.ads;
+  return state.ads.filter(a => state.selectedAdsetIds.has(a.adset_id));
+}
+
+function todayISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function daysAgoISO(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  const y = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${mm}-${dd}`;
+}
+
+function getDateRange() {
+  const v = datePresetEl.value;
+  const today = todayISO();
+  if (v === "today")     return { since: today, until: today };
+  if (v === "yesterday") { const y = daysAgoISO(1); return { since: y, until: y }; }
+  if (v === "last_7d")   return { since: daysAgoISO(6),   until: today };
+  if (v === "last_30d")  return { since: daysAgoISO(29),  until: today };
+  if (v === "last_year") return { since: daysAgoISO(364), until: today };
+  if (v === "__day") {
+    const d = dateSingleEl.value;
+    if (!d) return null;
+    return { since: d, until: d };
+  }
+  if (v === "__range") {
+    const from = dateFromEl.value;
+    const to = dateToEl.value || from;
+    if (!from) return null;
+    return from <= to ? { since: from, until: to } : { since: to, until: from };
+  }
+  return null;
+}
+
+function getDateParams() {
+  const r = getDateRange();
+  if (!r) return null;
+  return { time_range: JSON.stringify(r) };
+}
+
+function extractMetaPurchases(actions) {
+  if (!Array.isArray(actions)) return 0;
+  const byType = {};
+  for (const a of actions) byType[a.action_type] = Number(a.value) || 0;
+  // Preferência: 'purchase' (deduplicado omni) > pixel-only > omni
+  return byType.purchase
+      || byType["offsite_conversion.fb_pixel_purchase"]
+      || byType.omni_purchase
+      || 0;
+}
+
+async function fetchInternalSales(range, campaignName) {
+  if (!campaignName) return {};
+  try {
+    const params = {
+      since: range.since,
+      until: range.until,
+      campaign: campaignName
+    };
+    if (!hideInternalEl.checked) params.include_internal = "1";
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch(`/dashboard/api/meta/internal-sales?${qs}`, { credentials: "same-origin" });
+    if (!r.ok) return { by_id: {}, by_name: {} };
+    const j = await r.json();
+    // by_id: vendas com meta_ad_id (cruzamento por ID, robusto a renomear).
+    // by_name: vendas sem ID, por nome do anúncio (legado). Cada venda está em um só.
+    return { by_id: (j && j.by_id) || {}, by_name: (j && j.by_name) || (j && j.counts) || {} };
+  } catch (e) {
+    return { by_id: {}, by_name: {} };
+  }
+}
+
+// Busca vendas reais de N campanhas e devolve um mapa { nomeCampanha: { by_id, by_name } }.
+// Mantém separado por campanha porque nomes de anúncio se repetem entre campanhas (ex.: "3"),
+// então cada anúncio é atribuído às vendas da SUA campanha, sem colisão cruzada.
+async function fetchInternalSalesByCampaign(range, campaignNames) {
+  const out = {};
+  await Promise.all((campaignNames || []).map(async (name) => {
+    out[name] = await fetchInternalSales(range, name);
+  }));
+  return out;
+}
+
+async function loadInsights() {
+  const ids = Array.from(state.selectedAdIds);
+  if (ids.length === 0) {
+    state.insights = [];
+    renderTable();
+    renderKpis();
+    return;
+  }
+  const range = getDateRange();
+  if (!range) {
+    setStatus("Informe a(s) data(s) do filtro.", true);
+    return;
+  }
+  setStatus("Carregando insights...", false, true);
+  try {
+    // Insights vêm por conta (/{account_id}/insights). Com múltiplas contas selecionadas,
+    // agrupa os anúncios escolhidos por conta e faz uma chamada por conta, com filtering
+    // ad.id IN [anúncios daquela conta]; depois junta tudo.
+    const byAccount = new Map();
+    for (const id of ids) {
+      const ad = state.ads.find(a => a.id === id);
+      const acc = ad ? ad._account_id : "";
+      if (!acc) continue;
+      if (!byAccount.has(acc)) byAccount.set(acc, []);
+      byAccount.get(acc).push(id);
+    }
+    const insightCalls = Array.from(byAccount.entries()).map(([acc, accIds]) => {
+      const filtering = JSON.stringify([{ field: "ad.id", operator: "IN", value: accIds }]);
+      return metaApi("insights", { account_id: acc, time_range: JSON.stringify(range), filtering });
+    });
+    // Vendas reais: uma consulta por nome de campanha selecionada, somando as contagens.
+    const campaignNames = Array.from(state.selectedCampaignIds)
+      .map(cid => state.campaigns.find(c => c.id === cid))
+      .filter(Boolean)
+      .map(c => c.name);
+    const [insightsArrays, internalByCampaign] = await Promise.all([
+      Promise.all(insightCalls),
+      fetchInternalSalesByCampaign(range, campaignNames)
+    ]);
+    const insights = insightsArrays.flat();
+    // Merge with selected ads so that ads without data still appear with zeros
+    const byId = new Map(insights.map(i => [i.ad_id, i]));
+    const merged = ids.map(id => {
+      const ad = state.ads.find(a => a.id === id);
+      const ins = byId.get(id) || {};
+      const ad_name = ins.ad_name || (ad ? ad.name : id);
+      const key = String(ad_name).trim();
+      const cre = ad && ad.creative ? ad.creative : null;
+      const thumbSmall = cre ? (cre.thumbnail_url || cre.image_url || null) : null;
+      const thumbLarge = cre ? (ad.original_image_urls?.[0] || cre.image_url || cre.thumbnail_url || null) : null;
+      // vendas reais: olha só as contagens da campanha do próprio anúncio.
+      // Cruza por ID (by_id[ad.id], robusto a renomear) + por nome (by_name[ad.name],
+      // legado). Cada venda está em só um mapa, então somar não duplica.
+      const camp = ad ? state.campaigns.find(c => c.id === ad._campaign_id) : null;
+      const campCounts = (camp && internalByCampaign[camp.name]) || {};
+      const salesById = campCounts.by_id || {};
+      const byName = campCounts.by_name || {};
+      const internalSales = Number(salesById[id] || 0) + Number(byName[key] || 0);
+      return {
+        ad_id: id,
+        ad_name,
+        thumb_small: thumbSmall,
+        thumb_large: thumbLarge,
+        destination_url: ad ? ad.destination_url : null,
+        spend: Number(ins.spend || 0),
+        clicks: Number(ins.inline_link_clicks || 0),
+        impressions: Number(ins.impressions || 0),
+        meta_purchases: extractMetaPurchases(ins.actions),
+        internal_sales: internalSales
+      };
+    });
+    state.insights = merged;
+    renderTable();
+    renderKpis();
+    setStatus("");
+  } catch (e) {
+    setStatus("Erro ao carregar insights: " + e.message, true);
+    state.insights = [];
+    renderTable();
+    renderKpis();
+  }
+}
+
+// ======================= RENDER =======================
+function renderCampaigns() {
+  campaignsListEl.innerHTML = "";
+
+  if (state.selectedAccountIds.size === 0) {
+    campaignsListEl.innerHTML = '<div class="empty">Selecione uma conta primeiro</div>';
+    campaignTriggerEl.disabled = true;
+    renderCampaignsSummary();
+    return;
+  }
+  if (state.campaigns.length === 0) {
+    campaignsListEl.innerHTML = '<div class="empty">Nenhuma campanha disponível</div>';
+    campaignTriggerEl.disabled = true;
+    renderCampaignsSummary();
+    return;
+  }
+  campaignTriggerEl.disabled = false;
+
+  const term = (campaignSearchTerm || "").trim().toLowerCase();
+  const filtered = term
+    ? state.campaigns.filter(c => (c.name || "").toLowerCase().includes(term))
+    : state.campaigns;
+
+  if (filtered.length === 0) {
+    campaignsListEl.innerHTML = '<div class="empty">Nenhuma campanha corresponde à busca</div>';
+    renderCampaignsSummary();
+    return;
+  }
+
+  // Com mais de uma conta selecionada, mostra o nome da conta pra desambiguar campanhas homônimas.
+  const multiAccount = state.selectedAccountIds.size > 1;
+
+  for (const camp of filtered) {
+    const item = document.createElement("label");
+    item.className = "ad-item";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = camp.id;
+    cb.checked = state.selectedCampaignIds.has(camp.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.selectedCampaignIds.add(camp.id);
+      else state.selectedCampaignIds.delete(camp.id);
+      renderCampaignsSummary();
+      onCampaignsChanged();
+    });
+    const name = document.createElement("span");
+    name.className = "ad-name";
+    let label = camp.name;
+    if (multiAccount) {
+      const acc = state.accounts.find(a => a.id === camp._account_id);
+      label = camp.name + ", " + (acc ? (acc.name || acc.id) : camp._account_id);
+    }
+    name.textContent = label;
+    name.title = label;
+    item.appendChild(cb);
+    item.appendChild(name);
+
+    const actions = document.createElement("span");
+    actions.className = "ad-actions";
+    const d = deliveryState(camp);
+    if (d.controllable) {
+      const sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "ad-switch" + (d.on ? " on" : "");
+      sw.setAttribute("role", "switch");
+      sw.setAttribute("aria-checked", d.on ? "true" : "false");
+      sw.title = d.on ? "Pausar campanha" : "Ativar campanha";
+      sw.disabled = togglingCampaignIds.has(camp.id);
+      sw.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleCampaignStatus(camp.id, d.on ? "PAUSED" : "ACTIVE");
+      });
+      actions.appendChild(sw);
+    } else {
+      const tag = document.createElement("span");
+      tag.className = "ad-tag";
+      tag.textContent = d.label;
+      tag.title = "Não está entregando: " + d.label;
+      actions.appendChild(tag);
+    }
+    item.appendChild(actions);
+    campaignsListEl.appendChild(item);
+  }
+  renderCampaignsSummary();
+}
+
+function renderCampaignsSummary() {
+  const total = state.campaigns.length;
+  const count = state.selectedCampaignIds.size;
+  campaignInfoEl.textContent = total > 0
+    ? `${count} de ${total} selecionada(s)`
+    : "0 selecionado(s)";
+
+  if (state.selectedAccountIds.size === 0) {
+    campaignSummaryEl.className = "ms-placeholder";
+    campaignSummaryEl.innerHTML = "Selecione uma conta primeiro";
+    return;
+  }
+  if (total === 0) {
+    campaignSummaryEl.className = "ms-placeholder";
+    campaignSummaryEl.innerHTML = "Nenhuma campanha disponível";
+    return;
+  }
+  if (count === 0) {
+    campaignSummaryEl.className = "ms-placeholder";
+    campaignSummaryEl.innerHTML = "Selecione uma campanha";
+    return;
+  }
+  const selected = state.campaigns.filter(c => state.selectedCampaignIds.has(c.id));
+  const maxChips = 2;
+  const chips = selected.slice(0, maxChips).map(c =>
+    `<span class="ms-chip">${escapeHtml(c.name)}</span>`
+  ).join("");
+  const extra = count > maxChips ? `<span class="ms-counter">+${count - maxChips}</span>` : "";
+  campaignSummaryEl.className = "ms-chips";
+  campaignSummaryEl.innerHTML = chips + extra;
+}
+
+function renderAdsets() {
+  adsetsListEl.innerHTML = "";
+
+  if (state.selectedCampaignIds.size === 0) {
+    adsetsListEl.innerHTML = '<div class="empty">Selecione uma campanha primeiro</div>';
+    adsetTriggerEl.disabled = true;
+    renderAdsetsSummary();
+    return;
+  }
+  if (state.adsets.length === 0) {
+    adsetsListEl.innerHTML = '<div class="empty">Nenhum conjunto disponível</div>';
+    adsetTriggerEl.disabled = true;
+    renderAdsetsSummary();
+    return;
+  }
+  adsetTriggerEl.disabled = false;
+
+  const term = (adsetSearchTerm || "").trim().toLowerCase();
+  const filtered = term
+    ? state.adsets.filter(a => (a.name || "").toLowerCase().includes(term))
+    : state.adsets;
+
+  if (filtered.length === 0) {
+    adsetsListEl.innerHTML = '<div class="empty">Nenhum conjunto corresponde à busca</div>';
+    renderAdsetsSummary();
+    return;
+  }
+
+  for (const adset of filtered) {
+    const item = document.createElement("label");
+    item.className = "ad-item";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = adset.id;
+    cb.checked = state.selectedAdsetIds.has(adset.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.selectedAdsetIds.add(adset.id);
+      else state.selectedAdsetIds.delete(adset.id);
+      state.selectedAdIds = new Set(getVisibleAds().map(a => a.id));
+      renderAdsetsSummary();
+      renderAds();
+      saveFilters();
+      autoApply(0);
+    });
+    const name = document.createElement("span");
+    name.className = "ad-name";
+    name.textContent = adset.name;
+    name.title = adset.name;
+    item.appendChild(cb);
+    item.appendChild(name);
+
+    const dset = adsetDeliveryState(adset);
+    const actions = document.createElement("span");
+    actions.className = "ad-actions";
+    if (dset.controllable) {
+      const sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "ad-switch" + (dset.on ? " on" : "");
+      sw.setAttribute("role", "switch");
+      sw.setAttribute("aria-checked", dset.on ? "true" : "false");
+      sw.title = dset.on ? "Pausar conjunto" : "Ativar conjunto";
+      sw.disabled = togglingAdsetIds.has(adset.id);
+      sw.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleAdsetStatus(adset.id, dset.on ? "PAUSED" : "ACTIVE");
+      });
+      actions.appendChild(sw);
+    } else if (!dset.on) {
+      const tag = document.createElement("span");
+      tag.className = "ad-tag";
+      tag.textContent = dset.label;
+      tag.title = "Não está entregando: " + dset.label;
+      actions.appendChild(tag);
+    }
+    item.appendChild(actions);
+
+    adsetsListEl.appendChild(item);
+  }
+
+  renderAdsetsSummary();
+}
+
+function renderAdsetsSummary() {
+  const total = state.adsets.length;
+  const count = state.selectedAdsetIds.size;
+  adsetInfoEl.textContent = total > 0
+    ? `${count} de ${total} selecionado(s)`
+    : "0 selecionado(s)";
+
+  if (state.selectedCampaignIds.size === 0) {
+    adsetSummaryEl.className = "ms-placeholder";
+    adsetSummaryEl.innerHTML = "Selecione uma campanha primeiro";
+    return;
+  }
+  if (total === 0) {
+    adsetSummaryEl.className = "ms-placeholder";
+    adsetSummaryEl.innerHTML = "Nenhum conjunto disponível";
+    return;
+  }
+  if (count === 0) {
+    adsetSummaryEl.className = "ms-placeholder";
+    adsetSummaryEl.innerHTML = `Todos os conjuntos (${total})`;
+    return;
+  }
+
+  const selected = state.adsets.filter(a => state.selectedAdsetIds.has(a.id));
+  const maxChips = 3;
+  const chips = selected.slice(0, maxChips).map(a =>
+    `<span class="ms-chip">${escapeHtml(a.name)}</span>`
+  ).join("");
+  const extra = count > maxChips ? `<span class="ms-counter">+${count - maxChips}</span>` : "";
+  adsetSummaryEl.className = "ms-chips";
+  adsetSummaryEl.innerHTML = chips + extra;
+}
+
+function renderAds() {
+  adsListEl.innerHTML = "";
+
+  if (state.selectedCampaignIds.size === 0) {
+    adsListEl.innerHTML = '<div class="empty">Selecione uma campanha primeiro</div>';
+    msTriggerEl.disabled = true;
+    renderAdsSummary();
+    return;
+  }
+  msTriggerEl.disabled = false;
+
+  const visible = getVisibleAds();
+  if (visible.length === 0) {
+    const msg = state.selectedAdsetIds.size > 0
+      ? "Nenhum anúncio nos conjuntos selecionados"
+      : "Nenhum anúncio nesta campanha";
+    adsListEl.innerHTML = `<div class="empty">${msg}</div>`;
+    renderAdsSummary();
+    return;
+  }
+
+  const term = (adsSearchTerm || "").trim().toLowerCase();
+  const filtered = term
+    ? visible.filter(a => (a.name || "").toLowerCase().includes(term))
+    : visible;
+
+  if (filtered.length === 0) {
+    adsListEl.innerHTML = '<div class="empty">Nenhum anúncio corresponde à busca</div>';
+    renderAdsSummary();
+    return;
+  }
+
+  for (const ad of filtered) {
+    const item = document.createElement("label");
+    item.className = "ad-item";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = ad.id;
+    cb.checked = state.selectedAdIds.has(ad.id);
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.selectedAdIds.add(ad.id);
+      else state.selectedAdIds.delete(ad.id);
+      renderAdsSummary();
+      saveFilters();
+      autoApply();
+    });
+    const name = document.createElement("span");
+    name.className = "ad-name";
+    name.textContent = ad.name;
+    name.title = ad.name;
+    item.appendChild(cb);
+    item.appendChild(name);
+
+    const actions = document.createElement("span");
+    actions.className = "ad-actions";
+
+    const d = adDeliveryState(ad);
+    if (d.controllable) {
+      const sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "ad-switch" + (d.on ? " on" : "");
+      sw.setAttribute("role", "switch");
+      sw.setAttribute("aria-checked", d.on ? "true" : "false");
+      sw.title = d.on ? "Pausar anúncio" : "Ativar anúncio";
+      sw.disabled = togglingAdIds.has(ad.id);
+      sw.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleAdStatus(ad.id, d.on ? "PAUSED" : "ACTIVE");
+      });
+      actions.appendChild(sw);
+    } else {
+      const tag = document.createElement("span");
+      tag.className = "ad-tag";
+      tag.textContent = d.label;
+      tag.title = "Não está entregando: " + d.label;
+      actions.appendChild(tag);
+    }
+
+    item.appendChild(actions);
+    adsListEl.appendChild(item);
+  }
+
+  renderAdsSummary();
+}
+
+function renderAdsSummary() {
+  const visible = getVisibleAds();
+  const count = visible.filter(a => state.selectedAdIds.has(a.id)).length;
+  const total = visible.length;
+  msInfoEl.textContent = total > 0
+    ? `${count} de ${total} selecionado(s)`
+    : "0 selecionado(s)";
+
+  if (state.selectedCampaignIds.size === 0) {
+    msSummaryEl.className = "ms-placeholder";
+    msSummaryEl.innerHTML = "Selecione uma campanha primeiro";
+    return;
+  }
+  if (total === 0) {
+    msSummaryEl.className = "ms-placeholder";
+    msSummaryEl.innerHTML = "Nenhum anúncio disponível";
+    return;
+  }
+  if (count === 0) {
+    msSummaryEl.className = "ms-placeholder";
+    msSummaryEl.innerHTML = "Nenhum anúncio selecionado";
+    return;
+  }
+
+  const selected = visible.filter(a => state.selectedAdIds.has(a.id));
+  const maxChips = 3;
+  const chips = selected.slice(0, maxChips).map(a =>
+    `<span class="ms-chip">${escapeHtml(a.name)}</span>`
+  ).join("");
+  const extra = count > maxChips ? `<span class="ms-counter">+${count - maxChips}</span>` : "";
+  msSummaryEl.className = "ms-chips";
+  msSummaryEl.innerHTML = chips + extra;
+}
+
+function renderKpis() {
+  const rows = state.insights;
+  const spend = rows.reduce((s, r) => s + (r.spend || 0), 0);
+  const clicks = rows.reduce((s, r) => s + (r.clicks || 0), 0);
+  const impressions = rows.reduce((s, r) => s + (r.impressions || 0), 0);
+  $("kpi-ads").textContent = fmtInt(rows.length);
+  $("kpi-spend").textContent = fmtBRL(spend);
+  $("kpi-clicks").textContent = fmtInt(clicks);
+  $("kpi-impressions").textContent = fmtInt(impressions);
+}
+
+function withDerived(rows) {
+  return rows.map(r => {
+    const ad = state.ads.find(a => a.id === r.ad_id);
+    // Ordem desejada: entregando > pausado (controlável) > resto. Usa o estado de
+    // entrega real (effective_status), não só o status próprio do anúncio.
+    const d = ad ? adDeliveryState(ad) : null;
+    const _status_rank = !d ? 2 : (d.on ? 0 : (d.controllable ? 1 : 2));
+    return {
+      ...r,
+      cpc: r.clicks > 0 ? r.spend / r.clicks : null,
+      cpm: r.impressions > 0 ? (r.spend / r.impressions) * 1000 : null,
+      ctr: r.impressions > 0 ? (r.clicks / r.impressions) * 100 : null,
+      cost_per_real: r.internal_sales > 0 ? r.spend / r.internal_sales : null,
+      _status_rank
+    };
+  });
+}
+
+let metaTable = null;
+
+// Filtro numérico que aceita ">10", "<=2", "=5" ou um número (≥). Útil pros headerFilter.
+function numHeaderFilter(headerValue, rowValue) {
+  if (headerValue === "" || headerValue == null) return true;
+  if (rowValue == null) return false;
+  const hv = String(headerValue).trim().replace(",", ".");
+  const m = hv.match(/^(>=|<=|>|<|=)\s*(-?\d+(?:\.\d+)?)$/);
+  if (m) {
+    const n = Number(m[2]);
+    switch (m[1]) {
+      case ">=": return rowValue >= n;
+      case "<=": return rowValue <= n;
+      case ">":  return rowValue > n;
+      case "<":  return rowValue < n;
+      case "=":  return rowValue === n;
+    }
+  }
+  const n = Number(hv);
+  if (!Number.isNaN(n)) return rowValue >= n;
+  return true;
+}
+
+const numSorter = { type: "number", params: { alignEmptyValues: "bottom" } };
+
+function fmtBRLCell(cell)  { const v = cell.getValue(); return (v == null) ? "–" : fmtBRL(v); }
+function fmtIntCell(cell)  { const v = cell.getValue(); return (v == null) ? "–" : fmtInt(v); }
+function fmtPctCell(cell)  { const v = cell.getValue(); return (v == null) ? "–" : fmtPct(v); }
+
+function thumbCellFormatter(cell) {
+  const r = cell.getRow().getData();
+  const small = r.thumb_small;
+  const large = r.thumb_large || small;
+  const thumb = small
+    ? `<img class="ad-thumb" src="${escapeHtml(small)}" data-thumb-large="${escapeHtml(large)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+    : '<span class="ad-thumb-empty" aria-hidden="true"></span>';
+  const link = r.destination_url
+    ? `<a class="creative-destination-link" href="${escapeHtml(r.destination_url)}" target="_blank" rel="noopener noreferrer" title="Abrir página de destino" aria-label="Abrir página de destino do criativo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+      </a>`
+    : "";
+  return `<span class="creative-cell">${thumb}${link}</span>`;
+}
+
+function adSwitchFormatter(cell) {
+  const r = cell.getRow().getData();
+  const ad = state.ads.find(a => a.id === r.ad_id);
+  if (!ad) return "–";
+  const d = adDeliveryState(ad);
+  // Quando o anúncio não é controlável pelo próprio toggle (conjunto/campanha
+  // pausados, em análise, etc.) o switch fica desligado e desabilitado, com o
+  // motivo no tooltip, espelha o "Off" da Meta sem fingir que dá pra ligar aqui.
+  const disabled = (!d.controllable || togglingAdIds.has(r.ad_id)) ? "disabled" : "";
+  const title = d.controllable
+    ? (d.on ? "Pausar anúncio" : "Ativar anúncio")
+    : ("Não está entregando: " + d.label);
+  const toggleAttrs = d.controllable
+    ? `data-toggle-ad-id="${escapeHtml(r.ad_id)}" data-toggle-to="${d.on ? "PAUSED" : "ACTIVE"}"`
+    : "";
+  return `<button type="button" class="ad-switch ${d.on ? "on" : ""}" role="switch" aria-checked="${d.on}" title="${escapeHtml(title)}" ${toggleAttrs} ${disabled}></button>`;
+}
+
+// Menu por header pra mostrar/esconder colunas (acessível pelo ícone ⋮ de qualquer coluna)
+function visibilityHeaderMenu() {
+  return this.getColumns()
+    .filter(c => c.getDefinition().field) // ignora a coluna de switch (sem field)
+    .map(col => {
+      const def = col.getDefinition();
+      const visible = col.isVisible();
+      const item = document.createElement("span");
+      item.textContent = (visible ? "✓ " : "   ") + (def.title || def.field);
+      return {
+        label: item,
+        action: function(e) {
+          e.stopPropagation();
+          col.toggle();
+        }
+      };
+    });
+}
+
+function buildColumns(data) {
+  return [
+    { title: "", field: "_status_rank", sorter: "number", headerMenu: false, headerHozAlign: "center", hozAlign: "center", width: 70, formatter: adSwitchFormatter, headerTooltip: "Ordenar por status (Ativo / Pausado)",
+      cellClick: function(e, cell) {
+        const btn = e.target.closest("button.ad-switch");
+        if (!btn || btn.disabled) return;
+        const id = btn.getAttribute("data-toggle-ad-id");
+        const to = btn.getAttribute("data-toggle-to");
+        if (id && (to === "ACTIVE" || to === "PAUSED")) toggleAdStatus(id, to);
+      },
+      bottomCalc: () => "Total", bottomCalcFormatter: c => c.getValue() },
+    { title: "", field: "thumb_small", headerSort: false, headerMenu: false, hozAlign: "center", headerHozAlign: "center", width: 90, formatter: thumbCellFormatter, headerTooltip: "Criativo e página de destino" },
+    { title: "Anúncio", field: "ad_name", sorter: "string", headerFilter: "input", headerFilterPlaceholder: "filtrar..." },
+    { title: "Gasto", field: "spend", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtBRLCell, headerFilter: "input", headerFilterFunc: numHeaderFilter, headerFilterPlaceholder: ">=10",
+      bottomCalc: function(_v, d) { return d.reduce((a,r)=>a+(r.spend||0),0); },
+      bottomCalcFormatter: c => fmtBRL(c.getValue() || 0) },
+    { title: "Cliques no link", field: "clicks", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtIntCell, headerFilter: "input", headerFilterFunc: numHeaderFilter, headerFilterPlaceholder: ">=10",
+      bottomCalc: function(_v, d) { return d.reduce((a,r)=>a+(r.clicks||0),0); },
+      bottomCalcFormatter: c => fmtInt(c.getValue() || 0) },
+    { title: "CPC", field: "cpc", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtBRLCell, headerFilter: "input", headerFilterFunc: numHeaderFilter, headerFilterPlaceholder: "<=2",
+      bottomCalc: function(_v, d) {
+        const s = d.reduce((a,r)=>a+(r.spend||0),0);
+        const c = d.reduce((a,r)=>a+(r.clicks||0),0);
+        return c > 0 ? s/c : null;
+      },
+      bottomCalcFormatter: c => c.getValue() != null ? fmtBRL(c.getValue()) : "–" },
+    { title: "Impressões", field: "impressions", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtIntCell, headerFilter: "input", headerFilterFunc: numHeaderFilter,
+      bottomCalc: function(_v, d) { return d.reduce((a,r)=>a+(r.impressions||0),0); },
+      bottomCalcFormatter: c => fmtInt(c.getValue() || 0) },
+    { title: "CPM", field: "cpm", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtBRLCell, headerFilter: "input", headerFilterFunc: numHeaderFilter, headerFilterPlaceholder: "<=20",
+      bottomCalc: function(_v, d) {
+        const s = d.reduce((a,r)=>a+(r.spend||0),0);
+        const i = d.reduce((a,r)=>a+(r.impressions||0),0);
+        return i > 0 ? (s/i)*1000 : null;
+      },
+      bottomCalcFormatter: c => c.getValue() != null ? fmtBRL(c.getValue()) : "–" },
+    { title: "CTR", field: "ctr", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtPctCell, headerFilter: "input", headerFilterFunc: numHeaderFilter,
+      bottomCalc: function(_v, d) {
+        const c = d.reduce((a,r)=>a+(r.clicks||0),0);
+        const i = d.reduce((a,r)=>a+(r.impressions||0),0);
+        return i > 0 ? (c/i)*100 : null;
+      },
+      bottomCalcFormatter: c => c.getValue() != null ? fmtPct(c.getValue()) : "–" },
+    { title: "Vendas (Meta)", field: "meta_purchases", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtIntCell, headerFilter: "input", headerFilterFunc: numHeaderFilter,
+      bottomCalc: function(_v, d) { return d.reduce((a,r)=>a+(r.meta_purchases||0),0); },
+      bottomCalcFormatter: c => fmtInt(c.getValue() || 0) },
+    { title: "Vendas reais", field: "internal_sales", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtIntCell, headerFilter: "input", headerFilterFunc: numHeaderFilter,
+      bottomCalc: function(_v, d) { return d.reduce((a,r)=>a+(r.internal_sales||0),0); },
+      bottomCalcFormatter: c => fmtInt(c.getValue() || 0) },
+    { title: "Custo/venda real", field: "cost_per_real", sorter: numSorter.type, sorterParams: numSorter.params, hozAlign: "right",
+      formatter: fmtBRLCell, headerFilter: "input", headerFilterFunc: numHeaderFilter, headerFilterPlaceholder: "<=20",
+      bottomCalc: function(_v, d) {
+        const s = d.reduce((a,r)=>a+(r.spend||0),0);
+        const v = d.reduce((a,r)=>a+(r.internal_sales||0),0);
+        return v > 0 ? s/v : null;
+      },
+      bottomCalcFormatter: c => c.getValue() != null ? fmtBRL(c.getValue()) : "–" }
+  ];
+}
+
+function renderTable() {
+  const wrap = $("tableWrap");
+  if (state.insights.length === 0) {
+    if (metaTable) { metaTable.destroy(); metaTable = null; }
+    wrap.innerHTML = '<div class="empty-state">Nenhum dado para os filtros selecionados.</div>';
+    return;
+  }
+  const data = withDerived(state.insights);
+
+  if (metaTable) {
+    metaTable.replaceData(data).then(() => {
+      // Garante que o formatter da coluna de switch reflita togglingAdIds atual
+      metaTable.redraw(false);
+    }).catch(() => {});
+    return;
+  }
+
+  wrap.innerHTML = '<div id="metaTabulator"></div>';
+  metaTable = new Tabulator("#metaTabulator", {
+    data,
+    layout: "fitDataStretch",
+    movableColumns: true,
+    resizableColumns: true,
+    selectableRows: false,
+    selectableRange: false,
+    columnDefaults: { headerMenu: visibilityHeaderMenu, headerHozAlign: "left", resizable: true },
+    columns: buildColumns(data),
+    persistence: { sort: true, columns: ["title", "width", "visible"], filter: true },
+    persistenceID: "meta-ads-table",
+    persistenceReaderFunc: tableConfigReader,
+    persistenceWriterFunc: tableConfigWriter,
+    initialSort: [{ column: "spend", dir: "desc" }]
+  });
+  metaTable.on("columnVisibilityChanged", function() {
+    tableConfigWriter("meta-ads-table", "columns", metaTable.getColumnLayout());
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+// ======================= THUMB HOVER PREVIEW =======================
+const thumbPopover = document.createElement("div");
+thumbPopover.className = "thumb-popover";
+const thumbPopoverImg = document.createElement("img");
+thumbPopover.appendChild(thumbPopoverImg);
+document.body.appendChild(thumbPopover);
+
+function positionThumbPopover(e) {
+  const padding = 16;
+  const rect = thumbPopover.getBoundingClientRect();
+  const w = rect.width || 420;
+  const h = rect.height || 420;
+  let left = e.clientX + padding;
+  let top  = e.clientY + padding;
+  if (left + w > window.innerWidth - 8)  left = e.clientX - w - padding;
+  if (top  + h > window.innerHeight - 8) top  = window.innerHeight - h - 8;
+  if (left < 8) left = 8;
+  if (top  < 8) top  = 8;
+  thumbPopover.style.left = left + "px";
+  thumbPopover.style.top  = top  + "px";
+}
+
+document.addEventListener("mouseover", (e) => {
+  const t = e.target.closest("img.ad-thumb[data-thumb-large]");
+  if (!t) return;
+  const url = t.getAttribute("data-thumb-large");
+  if (!url) return;
+  if (thumbPopoverImg.src !== url) thumbPopoverImg.src = url;
+  thumbPopover.style.display = "block";
+  positionThumbPopover(e);
+});
+document.addEventListener("mousemove", (e) => {
+  if (thumbPopover.style.display === "block") positionThumbPopover(e);
+});
+document.addEventListener("mouseout", (e) => {
+  const t = e.target.closest("img.ad-thumb[data-thumb-large]");
+  if (!t) return;
+  const related = e.relatedTarget;
+  if (related && t.contains(related)) return;
+  thumbPopover.style.display = "none";
+});
+
+// ======================= EVENTS =======================
+// (conta e campanha agora são multi-select, os handlers ficam nos checkboxes
+//  via onAccountsChanged()/onCampaignsChanged() e nos botões selecionar/limpar abaixo)
+
+applyBtn.addEventListener("click", () => {
+  if (state.selectedCampaignIds.size === 0) {
+    setStatus("Selecione uma campanha.", true);
+    return;
+  }
+  if (state.selectedAdIds.size === 0) {
+    setStatus("Selecione ao menos um anúncio.", true);
+    return;
+  }
+  saveFilters();
+  loadInsights();
+});
+
+refreshBtn.addEventListener("click", async () => {
+  await loadCampaigns();
+  const existing = new Set(state.campaigns.map(c => c.id));
+  state.selectedCampaignIds = new Set(Array.from(state.selectedCampaignIds).filter(id => existing.has(id)));
+  renderCampaigns();
+  if (state.selectedCampaignIds.size > 0) {
+    await reloadAdsetsAndAds();
+    const existingAdsets = new Set(state.adsets.map(a => a.id));
+    state.selectedAdsetIds = new Set(Array.from(state.selectedAdsetIds).filter(id => existingAdsets.has(id)));
+    renderAdsets();
+    renderAds();
+    if (state.selectedAdIds.size > 0) await loadInsights();
+  }
+});
+
+selectAllBtn.addEventListener("click", () => {
+  // seleciona apenas os visíveis (respeita conjunto + busca)
+  const term = (adsSearchTerm || "").trim().toLowerCase();
+  const base = getVisibleAds();
+  const visible = term
+    ? base.filter(a => (a.name || "").toLowerCase().includes(term))
+    : base;
+  visible.forEach(a => state.selectedAdIds.add(a.id));
+  renderAds();
+  saveFilters();
+  autoApply(0);
+});
+clearAllBtn.addEventListener("click", () => {
+  const term = (adsSearchTerm || "").trim().toLowerCase();
+  const base = getVisibleAds();
+  if (term) {
+    const visible = base.filter(a => (a.name || "").toLowerCase().includes(term));
+    visible.forEach(a => state.selectedAdIds.delete(a.id));
+  } else {
+    base.forEach(a => state.selectedAdIds.delete(a.id));
+  }
+  renderAds();
+  saveFilters();
+  autoApply(0);
+});
+
+// ===== Multi-select (contas) open/close, busca, atalhos =====
+accountTriggerEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (accountTriggerEl.disabled) return;
+  const open = accountsSelectEl.classList.toggle("open");
+  accountTriggerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) setTimeout(() => accountSearchEl.focus(), 0);
+});
+document.addEventListener("click", (e) => {
+  if (!accountsSelectEl.contains(e.target)) {
+    accountsSelectEl.classList.remove("open");
+    accountTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && accountsSelectEl.classList.contains("open")) {
+    accountsSelectEl.classList.remove("open");
+    accountTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+accountSearchEl.addEventListener("input", (e) => {
+  accountSearchTerm = e.target.value;
+  renderAccounts();
+});
+accountSelectAllBtn.addEventListener("click", () => {
+  const term = (accountSearchTerm || "").trim().toLowerCase();
+  const visible = term
+    ? state.accounts.filter(a => ((a.name || "") + " " + (a.id || "")).toLowerCase().includes(term))
+    : state.accounts;
+  visible.forEach(a => state.selectedAccountIds.add(a.id));
+  renderAccounts();
+  persistAccountChoice();
+  onAccountsChanged();
+});
+accountClearAllBtn.addEventListener("click", () => {
+  const term = (accountSearchTerm || "").trim().toLowerCase();
+  if (term) {
+    const visible = state.accounts.filter(a => ((a.name || "") + " " + (a.id || "")).toLowerCase().includes(term));
+    visible.forEach(a => state.selectedAccountIds.delete(a.id));
+  } else {
+    state.selectedAccountIds.clear();
+  }
+  renderAccounts();
+  persistAccountChoice();
+  onAccountsChanged();
+});
+
+// ===== Multi-select (campanhas) open/close, busca, atalhos =====
+campaignTriggerEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (campaignTriggerEl.disabled) return;
+  const open = campaignsSelectEl.classList.toggle("open");
+  campaignTriggerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) setTimeout(() => campaignSearchEl.focus(), 0);
+});
+document.addEventListener("click", (e) => {
+  if (!campaignsSelectEl.contains(e.target)) {
+    campaignsSelectEl.classList.remove("open");
+    campaignTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && campaignsSelectEl.classList.contains("open")) {
+    campaignsSelectEl.classList.remove("open");
+    campaignTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+campaignSearchEl.addEventListener("input", (e) => {
+  campaignSearchTerm = e.target.value;
+  renderCampaigns();
+});
+campaignSelectAllBtn.addEventListener("click", () => {
+  const term = (campaignSearchTerm || "").trim().toLowerCase();
+  const visible = term
+    ? state.campaigns.filter(c => (c.name || "").toLowerCase().includes(term))
+    : state.campaigns;
+  visible.forEach(c => state.selectedCampaignIds.add(c.id));
+  renderCampaigns();
+  onCampaignsChanged();
+});
+campaignClearAllBtn.addEventListener("click", () => {
+  const term = (campaignSearchTerm || "").trim().toLowerCase();
+  if (term) {
+    const visible = state.campaigns.filter(c => (c.name || "").toLowerCase().includes(term));
+    visible.forEach(c => state.selectedCampaignIds.delete(c.id));
+  } else {
+    state.selectedCampaignIds.clear();
+  }
+  renderCampaigns();
+  onCampaignsChanged();
+});
+
+// ===== Multi-select open/close =====
+msTriggerEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (msTriggerEl.disabled) return;
+  const open = adsSelectEl.classList.toggle("open");
+  msTriggerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) setTimeout(() => msSearchEl.focus(), 0);
+});
+document.addEventListener("click", (e) => {
+  if (!adsSelectEl.contains(e.target)) {
+    adsSelectEl.classList.remove("open");
+    msTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && adsSelectEl.classList.contains("open")) {
+    adsSelectEl.classList.remove("open");
+    msTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+msSearchEl.addEventListener("input", (e) => {
+  adsSearchTerm = e.target.value;
+  renderAds();
+});
+
+// ===== Multi-select (adsets) open/close, busca, atalhos =====
+adsetTriggerEl.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (adsetTriggerEl.disabled) return;
+  const open = adsetsSelectEl.classList.toggle("open");
+  adsetTriggerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  if (open) setTimeout(() => adsetSearchEl.focus(), 0);
+});
+document.addEventListener("click", (e) => {
+  if (!adsetsSelectEl.contains(e.target)) {
+    adsetsSelectEl.classList.remove("open");
+    adsetTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && adsetsSelectEl.classList.contains("open")) {
+    adsetsSelectEl.classList.remove("open");
+    adsetTriggerEl.setAttribute("aria-expanded", "false");
+  }
+});
+adsetSearchEl.addEventListener("input", (e) => {
+  adsetSearchTerm = e.target.value;
+  renderAdsets();
+});
+adsetSelectAllBtn.addEventListener("click", () => {
+  const term = (adsetSearchTerm || "").trim().toLowerCase();
+  const visible = term
+    ? state.adsets.filter(a => (a.name || "").toLowerCase().includes(term))
+    : state.adsets;
+  visible.forEach(a => state.selectedAdsetIds.add(a.id));
+  state.selectedAdIds = new Set(getVisibleAds().map(a => a.id));
+  renderAdsets();
+  renderAds();
+  saveFilters();
+  autoApply(0);
+});
+adsetClearAllBtn.addEventListener("click", () => {
+  const term = (adsetSearchTerm || "").trim().toLowerCase();
+  if (term) {
+    const visible = state.adsets.filter(a => (a.name || "").toLowerCase().includes(term));
+    visible.forEach(a => state.selectedAdsetIds.delete(a.id));
+  } else {
+    state.selectedAdsetIds.clear();
+  }
+  state.selectedAdIds = new Set(getVisibleAds().map(a => a.id));
+  renderAdsets();
+  renderAds();
+  saveFilters();
+  autoApply(0);
+});
+
+// ===== Date custom inputs toggle =====
+function updateDateFields() {
+  const v = datePresetEl.value;
+  dateDayEl.classList.toggle("show", v === "__day");
+  dateRangeEl.classList.toggle("show", v === "__range");
+  const today = new Date().toISOString().slice(0, 10);
+  if (v === "__day" && !dateSingleEl.value) dateSingleEl.value = today;
+  if (v === "__range") {
+    if (!dateFromEl.value) {
+      const d = new Date(); d.setDate(d.getDate() - 7);
+      dateFromEl.value = d.toISOString().slice(0, 10);
+    }
+    if (!dateToEl.value) dateToEl.value = today;
+  }
+}
+datePresetEl.addEventListener("change", () => {
+  updateDateFields();
+  saveFilters();
+  // Em "__day"/"__range" espera o usuário preencher as datas; nos presets aplica direto.
+  const v = datePresetEl.value;
+  if (v !== "__day" && v !== "__range") autoApply(0);
+});
+dateSingleEl.addEventListener("change", () => { saveFilters(); autoApply(0); });
+dateFromEl.addEventListener("change", () => { saveFilters(); autoApply(0); });
+dateToEl.addEventListener("change", () => { saveFilters(); autoApply(0); });
+updateDateFields();
+
+// ======================= BOOT =======================
+async function boot() {
+  await loadTableConfig();
+  const saved = loadFilters();
+
+  // hide-internal vindo da URL tem prioridade sobre o localStorage
+  if (saved && saved.hideInternal === "0") hideInternalEl.checked = false;
+  else if (saved && saved.hideInternal === "1") hideInternalEl.checked = true;
+
+  if (saved) {
+    if (saved.datePreset) {
+      datePresetEl.value = saved.datePreset;
+      if (saved.dateSingle) dateSingleEl.value = saved.dateSingle;
+      if (saved.dateFrom) dateFromEl.value = saved.dateFrom;
+      if (saved.dateTo) dateToEl.value = saved.dateTo;
+      updateDateFields();
+    }
+  }
+
+  await loadAccounts(saved);
+  await loadCampaigns();
+  saveFilters(); // materializa contas/data/internal na URL já no load
+
+  // restaura campanhas salvas que ainda existem nas contas selecionadas
+  const savedCampaignIds = (saved && Array.isArray(saved.campaignIds)) ? saved.campaignIds : [];
+  const validCampaignIds = savedCampaignIds.filter(id => state.campaigns.some(c => c.id === id));
+  if (validCampaignIds.length === 0) { renderCampaigns(); renderAdsets(); renderAds(); return; }
+
+  state.selectedCampaignIds = new Set(validCampaignIds);
+  renderCampaigns();
+  await reloadAdsetsAndAds();
+
+  if (Array.isArray(saved.adsetIds) && saved.adsetIds.length > 0) {
+    const validAdsetIds = saved.adsetIds.filter(id => state.adsets.some(a => a.id === id));
+    state.selectedAdsetIds = new Set(validAdsetIds);
+    renderAdsets();
+  }
+
+  if (Array.isArray(saved.adIds) && saved.adIds.length > 0) {
+    const visibleIds = new Set(getVisibleAds().map(a => a.id));
+    const valid = saved.adIds.filter(id => visibleIds.has(id));
+    if (valid.length > 0) {
+      state.selectedAdIds = new Set(valid);
+      renderAds();
+      await loadInsights();
+    } else {
+      renderAds();
+    }
+  } else {
+    renderAds();
+  }
+  saveFilters(); // materializa campanha/conjuntos/anúncios na URL
+}
+boot();
+</script>
+</body>
+</html>

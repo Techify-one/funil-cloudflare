@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seções · Analytics por bloco</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #94a3b8; }
+    .kpi-value { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+    .kpi-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; }
+    .field-select, .field-input { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e5e7eb; padding: 6px 8px; font-size: 13px; }
+    .field-select:focus, .field-input:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.25); }
+    .bar-bg { background: #1e293b; height: 22px; border-radius: 6px; position: relative; overflow: hidden; }
+    .bar-fill { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); border-radius: 6px; transition: width .3s ease; }
+    .bar-fill.drop { background: linear-gradient(90deg, #f87171 0%, #ef4444 100%); }
+    .bar-fill.good { background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
+    .bar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 12px; color: #e5e7eb; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+    .section-row { display: grid; grid-template-columns: 220px 1fr 60px 60px; gap: 8px; align-items: center; padding: 6px 0; }
+    .section-row .slug { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .section-row .num { font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; color: #94a3b8; }
+    @media (max-width: 640px){ .section-row { grid-template-columns: 1fr 80px 60px; } .section-row .num.drop-col { display: none; } }
+    .device-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .device-mobile { background: rgba(168,85,247,.15); color: #c084fc; }
+    .device-tablet { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .device-desktop { background: rgba(34,197,94,.15); color: #4ade80; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #1f2a44; color: #e5e7eb; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+    .toast.show { opacity: 1; }
+    .empty { text-align: center; padding: 32px 16px; color: #64748b; font-size: 13px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 grid place-items-center text-lg">📊</div>
+        <div>
+          <h1 class="text-lg font-semibold">Analytics por seção</h1>
+          <p class="text-xs text-slate-400">Como visitantes leem a LP, leitura, drop-off, atribuição de CTA</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/funil" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg px-3 py-2 transition">Funil</a>
+        <a href="/painel" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg px-3 py-2 transition">Painel</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-5">
+    <!-- FILTROS -->
+    <section class="card p-4">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div>
+          <label class="field-label" for="f-page">Página</label>
+          <select id="f-page" class="field-select mt-1"></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-range">Período</label>
+          <select id="f-range" class="field-select mt-1">
+            <option value="1d">Últimas 24h</option>
+            <option value="7d" selected>Últimos 7 dias</option>
+            <option value="30d">Últimos 30 dias</option>
+            <option value="90d">Últimos 90 dias</option>
+            <option value="all">Tudo</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="f-device">Device</label>
+          <select id="f-device" class="field-select mt-1">
+            <option value="all">Todos</option>
+            <option value="mobile">Mobile</option>
+            <option value="tablet">Tablet</option>
+            <option value="desktop">Desktop</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="f-utm">utm_campaign</label>
+          <select id="f-utm" class="field-select mt-1"><option value="">Todas</option></select>
+        </div>
+        <div>
+          <label class="field-label" for="f-funnel">Funnel</label>
+          <select id="f-funnel" class="field-select mt-1"><option value="">Todos</option></select>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div class="card p-4">
+        <div class="kpi-label">Sessões com tracking</div>
+        <div class="kpi-value" id="kpi-sessions">–</div>
+        <div class="kpi-sub" id="kpi-sessions-sub">eventos: –</div>
+      </div>
+      <div class="card p-4">
+        <div class="kpi-label">Scroll médio</div>
+        <div class="kpi-value"><span id="kpi-scroll">–</span><span class="text-sm text-slate-400 font-normal">%</span></div>
+        <div class="kpi-sub" id="kpi-scroll-sub">distribuição abaixo</div>
+      </div>
+      <div class="card p-4">
+        <div class="kpi-label">Tempo médio na página</div>
+        <div class="kpi-value" id="kpi-time">–</div>
+        <div class="kpi-sub">segundos visíveis</div>
+      </div>
+      <div class="card p-4">
+        <div class="kpi-label">Cliques em CTA</div>
+        <div class="kpi-value" id="kpi-clicks">–</div>
+        <div class="kpi-sub" id="kpi-ctr">CTR: –</div>
+      </div>
+      <div class="card p-4">
+        <div class="kpi-label">Devices</div>
+        <div class="flex flex-wrap gap-2 mt-1" id="kpi-devices"></div>
+      </div>
+    </section>
+
+    <!-- 4 ANSWER BLOCKS -->
+    <section class="grid md:grid-cols-2 gap-5">
+      <!-- 1) Média de leitura: distribuição de scroll -->
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-semibold">Média de leitura da página</h2>
+            <p class="text-xs text-slate-400">Distribuição: % de sessões que cruzou cada marco</p>
+          </div>
+        </div>
+        <div id="scroll-dist" class="space-y-2"></div>
+      </div>
+
+      <!-- 2) Funil de seções: onde param -->
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-semibold">Em que bloco param</h2>
+            <p class="text-xs text-slate-400">% de sessões que viu cada seção (drop-off)</p>
+          </div>
+        </div>
+        <div id="section-funnel" class="space-y-1"></div>
+      </div>
+
+      <!-- 3) Atribuição: qual seção converte -->
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-semibold">Em qual bloco vão pro checkout</h2>
+            <p class="text-xs text-slate-400">Última seção visível no momento do clique no CTA</p>
+          </div>
+        </div>
+        <div id="cta-attribution" class="space-y-1"></div>
+      </div>
+
+      <!-- 4) Ranking de CTAs -->
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-semibold">Qual botão de checkout converte mais</h2>
+            <p class="text-xs text-slate-400">soft1 / hard1 / hard2 / hard3 / hard4 / sticky</p>
+          </div>
+        </div>
+        <div id="cta-ranking" class="space-y-1"></div>
+      </div>
+    </section>
+
+    <!-- 5) Device split detalhado -->
+    <section class="card p-4">
+      <div class="mb-3">
+        <h2 class="font-semibold">Split por device</h2>
+        <p class="text-xs text-slate-400">Performance comparada entre mobile, tablet e desktop</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-800">
+              <th class="text-left py-2 px-2 text-slate-400 font-medium">Device</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">Sessões</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">% do total</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">Scroll médio</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">Tempo médio</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">Cliques</th>
+              <th class="text-right py-2 px-2 text-slate-400 font-medium">CTR</th>
+            </tr>
+          </thead>
+          <tbody id="device-split-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  var $page = document.getElementById('f-page');
+  var $range = document.getElementById('f-range');
+  var $device = document.getElementById('f-device');
+  var $utm = document.getElementById('f-utm');
+  var $funnel = document.getElementById('f-funnel');
+
+  var $kpiSessions = document.getElementById('kpi-sessions');
+  var $kpiSessionsSub = document.getElementById('kpi-sessions-sub');
+  var $kpiScroll = document.getElementById('kpi-scroll');
+  var $kpiScrollSub = document.getElementById('kpi-scroll-sub');
+  var $kpiTime = document.getElementById('kpi-time');
+  var $kpiClicks = document.getElementById('kpi-clicks');
+  var $kpiCtr = document.getElementById('kpi-ctr');
+  var $kpiDevices = document.getElementById('kpi-devices');
+
+  var $scrollDist = document.getElementById('scroll-dist');
+  var $sectionFunnel = document.getElementById('section-funnel');
+  var $ctaAttribution = document.getElementById('cta-attribution');
+  var $ctaRanking = document.getElementById('cta-ranking');
+  var $deviceBody = document.getElementById('device-split-body');
+
+  var $toast = document.getElementById('toast');
+  var toastTm = null;
+  function toast(msg){
+    $toast.textContent = msg;
+    $toast.classList.add('show');
+    if (toastTm) clearTimeout(toastTm);
+    toastTm = setTimeout(function(){ $toast.classList.remove('show'); }, 2400);
+  }
+
+  function fmtInt(n){ return (n == null || isNaN(n)) ? '–' : Number(n).toLocaleString('pt-BR'); }
+  function fmtPct(n){ return (n == null || isNaN(n)) ? '–' : (Math.round(n * 10) / 10).toLocaleString('pt-BR'); }
+  function fmtTime(s){
+    if (s == null || isNaN(s)) return '–';
+    s = Math.round(s);
+    if (s < 60) return s + 's';
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m + 'min ' + (r < 10 ? '0' + r : r) + 's';
+  }
+  function devicePill(d){
+    var cls = d === 'mobile' ? 'device-mobile' : d === 'tablet' ? 'device-tablet' : 'device-desktop';
+    var label = d === 'mobile' ? '📱 Mobile' : d === 'tablet' ? '📱 Tablet' : '💻 Desktop';
+    return cls + '|' + label;
+  }
+
+  function buildQuery(){
+    var qs = new URLSearchParams();
+    if ($page.value) qs.set('page', $page.value);
+    qs.set('range', $range.value || '7d');
+    if ($device.value && $device.value !== 'all') qs.set('device', $device.value);
+    if ($utm.value) qs.set('utm_campaign', $utm.value);
+    if ($funnel.value) qs.set('funnel', $funnel.value);
+    return qs.toString();
+  }
+
+  function renderBars(container, items, opts){
+    opts = opts || {};
+    container.innerHTML = '';
+    if (!items || !items.length){
+      container.innerHTML = '<div class="empty">Sem dados no período/filtro</div>';
+      return;
+    }
+    var max = 0;
+    for (var i = 0; i < items.length; i++) if (items[i].count > max) max = items[i].count;
+    if (max === 0) max = 1;
+    items.forEach(function(it){
+      var pctOfMax = (it.count / max) * 100;
+      var pctOfTotal = it.pct == null ? null : it.pct;
+      var cls = 'bar-fill';
+      if (opts.colorByPct && pctOfTotal != null) {
+        if (pctOfTotal < 30) cls += ' drop';
+        else if (pctOfTotal > 70) cls += ' good';
+      }
+      var row = document.createElement('div');
+      row.className = 'section-row';
+      var label = document.createElement('div');
+      label.className = 'slug';
+      label.textContent = it.label || it.section || it.cta || '–';
+      label.title = label.textContent;
+      var bar = document.createElement('div');
+      bar.className = 'bar-bg';
+      bar.innerHTML = '<div class="' + cls + '" style="width:' + pctOfMax.toFixed(1) + '%"></div>' +
+        '<div class="bar-text"><span>' + fmtInt(it.count) + '</span>' +
+        (pctOfTotal != null ? '<span>' + fmtPct(pctOfTotal) + '%</span>' : '') + '</div>';
+      var numCount = document.createElement('div');
+      numCount.className = 'num';
+      numCount.textContent = fmtInt(it.count);
+      var numPct = document.createElement('div');
+      numPct.className = 'num drop-col';
+      numPct.textContent = pctOfTotal != null ? fmtPct(pctOfTotal) + '%' : '';
+      row.appendChild(label);
+      row.appendChild(bar);
+      row.appendChild(numCount);
+      row.appendChild(numPct);
+      container.appendChild(row);
+    });
+  }
+
+  function renderKpi(data){
+    $kpiSessions.textContent = fmtInt(data.totals.sessions);
+    $kpiSessionsSub.textContent = 'eventos: ' + fmtInt(data.totals.events);
+    $kpiScroll.textContent = fmtPct(data.totals.avg_scroll_pct);
+    $kpiTime.textContent = fmtTime(data.totals.avg_time_s);
+    $kpiClicks.textContent = fmtInt(data.totals.cta_clicks);
+    var ctr = data.totals.sessions > 0 ? (data.totals.cta_clickers / data.totals.sessions) * 100 : 0;
+    $kpiCtr.textContent = 'CTR: ' + fmtPct(ctr) + '%';
+    $kpiDevices.innerHTML = '';
+    var devices = data.device_breakdown || {};
+    ['mobile','tablet','desktop'].forEach(function(d){
+      var info = devices[d] || { sessions: 0, pct: 0 };
+      var p = devicePill(d).split('|');
+      var el = document.createElement('span');
+      el.className = 'device-pill ' + p[0];
+      el.textContent = p[1] + ' ' + fmtPct(info.pct) + '%';
+      el.title = fmtInt(info.sessions) + ' sessões';
+      $kpiDevices.appendChild(el);
+    });
+  }
+
+  function renderAll(data){
+    renderKpi(data);
+    renderBars($scrollDist, (data.scroll_distribution || []).map(function(b){
+      return { label: '≥ ' + b.milestone + '%', count: b.sessions, pct: b.pct };
+    }), { colorByPct: false });
+    renderBars($sectionFunnel, (data.section_funnel || []).map(function(s){
+      return { label: s.section, count: s.sessions, pct: s.pct };
+    }), { colorByPct: true });
+    renderBars($ctaAttribution, (data.cta_attribution || []).map(function(s){
+      return { label: s.last_section || '(sem seção)', count: s.clicks, pct: s.pct };
+    }), { colorByPct: false });
+    renderBars($ctaRanking, (data.cta_ranking || []).map(function(c){
+      return { label: c.cta, count: c.clicks, pct: c.pct };
+    }), { colorByPct: false });
+    renderDeviceSplit(data.device_split || []);
+  }
+
+  function renderDeviceSplit(rows){
+    $deviceBody.innerHTML = '';
+    if (!rows.length){
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="7" class="empty">Sem dados</td>';
+      $deviceBody.appendChild(tr);
+      return;
+    }
+    rows.forEach(function(r){
+      var tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-800/40';
+      var p = devicePill(r.device).split('|');
+      tr.innerHTML =
+        '<td class="py-2 px-2"><span class="device-pill ' + p[0] + '">' + p[1] + '</span></td>' +
+        '<td class="text-right py-2 px-2">' + fmtInt(r.sessions) + '</td>' +
+        '<td class="text-right py-2 px-2">' + fmtPct(r.pct) + '%</td>' +
+        '<td class="text-right py-2 px-2">' + fmtPct(r.avg_scroll_pct) + '%</td>' +
+        '<td class="text-right py-2 px-2">' + fmtTime(r.avg_time_s) + '</td>' +
+        '<td class="text-right py-2 px-2">' + fmtInt(r.cta_clicks) + '</td>' +
+        '<td class="text-right py-2 px-2">' + fmtPct(r.ctr) + '%</td>';
+      $deviceBody.appendChild(tr);
+    });
+  }
+
+  function fillSelect(sel, values, keep){
+    var current = keep ? sel.value : '';
+    while (sel.options.length > (sel.options[0] && sel.options[0].value === '' ? 1 : 0)) sel.remove(sel.options.length - 1);
+    values.forEach(function(v){
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    if (current && values.indexOf(current) >= 0) sel.value = current;
+  }
+
+  function loadFiltersMeta(){
+    return fetch('/dashboard/api/sections/meta', { credentials: 'same-origin' })
+      .then(function(r){ if (!r.ok) throw new Error('meta ' + r.status); return r.json(); })
+      .then(function(m){
+        // pages: no first option=value; we add directly
+        while ($page.options.length) $page.remove(0);
+        (m.pages || []).forEach(function(p){
+          var opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          $page.appendChild(opt);
+        });
+        if (!$page.options.length){
+          var opt = document.createElement('option');
+          opt.value = 'exemplo';
+          opt.textContent = 'exemplo';
+          $page.appendChild(opt);
+        }
+        fillSelect($utm, m.utm_campaigns || [], true);
+        fillSelect($funnel, m.funnels || [], true);
+      });
+  }
+
+  function load(){
+    var qs = buildQuery();
+    fetch('/dashboard/api/sections?' + qs, { credentials: 'same-origin' })
+      .then(function(r){ if (!r.ok) throw new Error('sections ' + r.status); return r.json(); })
+      .then(renderAll)
+      .catch(function(err){ toast('Erro ao carregar: ' + (err.message || err)); });
+  }
+
+  [$page, $range, $device, $utm, $funnel].forEach(function(el){
+    el.addEventListener('change', load);
+  });
+
+  loadFiltersMeta().then(load).catch(function(err){ toast('Erro nos filtros: ' + (err.message || err)); load(); });
+})();
+</script>
+</body>
+</html>

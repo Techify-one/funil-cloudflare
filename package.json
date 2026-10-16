@@ -1,0 +1,25 @@
+{
+  "name": "funil-cloudflare",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Funil de vendas completo em Cloudflare Workers: páginas com Pixel + CAPI, checkout Mercado Pago, dashboard de leads, vendas, funil e Meta Ads.",
+  "license": "MIT",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "dev": "node scripts/dev.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test tests/unit/*.test.mjs tests/integration/*.test.mjs",
+    "test:ui": "node --test tests/ui/*.test.mjs",
+    "scan": "bash scripts/scan.sh"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1",
+    "wrangler": "^4.84.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

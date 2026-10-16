@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Checkout | __BRAND_NAME__</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
+
+  <!-- Mercado Pago SDK v2 -->
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '__META_PIXEL_ID__');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=__META_PIXEL_ID__&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #0b0b0b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #10b981;
+      --accent-dark: #047857;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Mobile keyboard: dá folga acima/abaixo quando rolamos o campo focado pra dentro da viewport. */
+    input, select, textarea, .mp-field, .ddi-trigger {
+      scroll-margin-top: 80px;
+      scroll-margin-bottom: 120px;
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 16px 16px 48px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 22px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .layout > aside { order: -1; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    h2 { margin: 0 0 2px; font-size: 1.15rem; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; margin: 0 0 12px; }
+
+    .field-label {
+      display: block;
+      font-size: 0.85rem;
+      color: #000;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .req { color: var(--danger); margin-left: 2px; }
+
+    .field {
+      position: relative;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .field:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+    .field.error { border-color: var(--danger); }
+
+    .field input, .field select {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 1rem;
+      color: var(--text);
+      padding: 10px 12px;
+      font-family: inherit;
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.72rem;
+      text-align: right;
+      min-height: 0;
+      margin: -4px 2px 0;
+      display: block;
+    }
+    .error-msg:empty { display: none; }
+
+    .phone-row {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 4px;
+    }
+    @media (max-width: 480px) {
+      .phone-row { grid-template-columns: 95px minmax(0, 1fr); gap: 8px; }
+    }
+
+    .ddi-wrap { position: relative; }
+    .ddi-trigger {
+      width: 100%;
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text);
+      text-align: left;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+      height: 42px;
+    }
+    .ddi-trigger:focus, .ddi-trigger.open {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+    .ddi-trigger .fi {
+      width: 22px;
+      height: 16px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .ddi-trigger .ddi-code { font-weight: 600; font-size: 0.95rem; }
+    .ddi-trigger .ddi-chev {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 0.7rem;
+      transition: transform 0.15s ease;
+    }
+    .ddi-trigger.open .ddi-chev { transform: rotate(180deg); }
+    @media (max-width: 480px) {
+      .ddi-trigger { padding: 13px 8px; gap: 4px; }
+      .ddi-trigger .ddi-code { font-size: 0.9rem; }
+    }
+
+    .ddi-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      min-width: 300px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.15);
+      z-index: 20;
+      overflow: hidden;
+    }
+    .ddi-search-wrap { padding: 10px; border-bottom: 1px solid var(--border); }
+    .ddi-search {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .ddi-search:focus { border-color: var(--accent); }
+    .ddi-list {
+      list-style: none;
+      margin: 0;
+      padding: 4px 0;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .ddi-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.92rem;
+    }
+    .ddi-item:hover, .ddi-item.active { background: #f3f4f6; }
+    .ddi-item .fi {
+      width: 22px;
+      height: 16px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    .ddi-item .ddi-item-name { flex: 1; color: var(--text); }
+    .ddi-item .ddi-item-code { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .ddi-empty { padding: 14px; color: var(--muted); font-size: 0.9rem; text-align: center; }
+
+    /* Method tabs */
+    .method-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 4px 0 14px;
+    }
+    .method-tab {
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .method-tab .ico { font-size: 1.1rem; line-height: 1; }
+    .method-tab:hover { border-color: #94a3b8; }
+    .method-tab.active {
+      border-color: var(--accent);
+      background: #ecfdf5;
+      color: var(--accent-dark);
+    }
+
+    .pix-info {
+      display: flex; align-items: center; gap: 10px;
+      background: #ecfdf5;
+      border: 1.5px solid #a7f3d0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 8px 0 14px;
+      font-size: 0.95rem;
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+    .pix-info .ico { font-size: 1.3rem; }
+
+    .cc-info {
+      display: flex; align-items: center; gap: 10px;
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 8px 0 14px;
+      font-size: 0.95rem;
+      color: var(--blue-dark);
+      font-weight: 600;
+    }
+    .cc-info .ico { font-size: 1.3rem; }
+
+    .btn {
+      display: inline-block; width: 100%;
+      background: var(--accent); color: #fff; border: none;
+      font-weight: 700; font-size: 1rem; padding: 14px 18px;
+      border-radius: 10px; cursor: pointer;
+      transition: background 0.15s ease;
+      font-family: inherit;
+    }
+    .btn:hover:not(:disabled) { background: var(--accent-dark); }
+    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    .btn-blue {
+      background: var(--blue);
+    }
+    .btn-blue:hover:not(:disabled) { background: var(--blue-dark); }
+
+    /* MP secure-iframe fields render inside a div container.
+       Style the container to look like our regular .field. */
+    .mp-field {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+      height: 42px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .mp-field:focus-within,
+    .mp-field.mp-focused {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+    .mp-field iframe {
+      width: 100% !important;
+      height: 38px !important;
+      border: 0 !important;
+      background: transparent !important;
+    }
+    .mp-field.error {
+      border-color: var(--danger);
+    }
+
+    .cc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 480px) {
+      .cc-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+
+    .cc-installments-select {
+      width: 100%;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+      margin-bottom: 8px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .cc-installments-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .cc-brand-row {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+      min-height: 22px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .brand-pill {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: #334155;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    /* Summary side panel */
+    .summary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 26px 22px 22px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .summary .title {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 4px 10px 12px;
+      line-height: 1.25;
+    }
+    .summary .desc {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding: 0 6px 14px;
+      line-height: 1.4;
+    }
+    .summary .desc:empty { display: none; }
+    .summary .price-block { text-align: center; padding: 4px 6px 18px; }
+    .summary .price-old { color: var(--muted); font-size: 0.95rem; margin-bottom: 4px; }
+    .summary .price-old s {
+      color: #b91c1c;
+      font-weight: 800;
+      text-decoration: line-through;
+      text-decoration-color: #b91c1c;
+      text-decoration-thickness: 2px;
+    }
+    .summary .price-old:empty { display: none; }
+    .summary .price-new {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--accent-dark);
+      line-height: 1.1;
+      margin: 2px 0 6px;
+    }
+    .summary .price-new .from { font-size: 0.85rem; color: var(--muted); font-weight: 500; display: block; }
+    .summary .divider { border: none; border-top: 1px dashed #d1d5db; margin: 0 -6px; }
+    .summary .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 22px 6px 6px;
+    }
+    .summary .total-label { font-size: 1.05rem; color: var(--text); font-weight: 700; }
+    .summary .total-value {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-align: right;
+    }
+    .selected-bumps-summary { margin: 8px 6px 0; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+    .selected-bumps-summary:empty { display: none; }
+
+    .order-bumps-card { border: 2px dashed #f59e0b; background: #fffbeb; }
+    .order-bumps-title { display: flex; align-items: center; gap: 8px; color: #92400e; }
+    .order-bump-option { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 12px; margin-top: 10px; border: 1px solid #fcd34d; border-radius: 10px; background: #fff; cursor: pointer; }
+    .order-bump-option:hover { border-color: #f59e0b; }
+    .order-bump-option input { width: 19px; height: 19px; margin: 2px 0 0; accent-color: var(--accent-dark); }
+    .order-bump-name { font-weight: 800; color: #111827; line-height: 1.25; }
+    .order-bump-description { color: #6b7280; font-size: .82rem; margin-top: 3px; line-height: 1.35; }
+    .order-bump-price { white-space: nowrap; color: #047857; font-weight: 800; font-size: .95rem; }
+
+    .secure-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #16a34a;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: 0.06em;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 18px rgba(22, 163, 74, 0.22);
+    }
+    .secure-banner svg { width: 20px; height: 20px; }
+
+    .guarantee-box {
+      margin: 14px 0 4px;
+      padding: 12px 14px;
+      border: 1px solid #d1fae5;
+      border-radius: 12px;
+      background: #f0fdf4;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .guarantee-box svg { flex: 0 0 auto; width: 32px; height: 32px; color: #059669; }
+    .guarantee-box .guarantee-copy { line-height: 1.3; }
+    .guarantee-box .guarantee-copy b {
+      display: block;
+      color: #064e3b;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+    .guarantee-box .guarantee-copy small {
+      color: #047857;
+      font-size: 0.78rem;
+    }
+
+    .sticky-col { position: sticky; top: 24px; }
+    @media (max-width: 960px) {
+      .sticky-col { position: static; top: auto; }
+    }
+
+    /* Overlay / modal */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      display: none; align-items: center; justify-content: center; z-index: 1000;
+      padding: 16px;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: 14px; max-width: 460px; width: 100%;
+      padding: 28px 24px; text-align: center;
+      box-shadow: 0 20px 60px -20px rgba(0,0,0,0.4);
+    }
+    .spinner {
+      width: 48px; height: 48px; border-radius: 50%;
+      border: 4px solid #e5e7eb; border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .modal h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .modal p { color: var(--muted); margin: 0; font-size: 0.95rem; line-height: 1.4; }
+    #modal-error-body { white-space: pre-line; text-align: left; }
+    .modal .err-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--danger-bg); color: var(--danger);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 1.6rem; font-weight: 700;
+    }
+    .modal.err h3 { color: var(--danger); }
+    .modal-btn {
+      margin-top: 18px; background: var(--accent); color: #fff;
+      border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-family: inherit;
+    }
+
+    /* PIX QR */
+    .qr-wrap {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+    }
+    .qr-img {
+      width: 220px; height: 220px;
+      margin: 8px auto 12px;
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      image-rendering: pixelated;
+      background: #fff;
+    }
+    .qr-code-box {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+      word-break: break-all;
+      text-align: left;
+      max-height: 88px;
+      overflow-y: auto;
+      margin: 4px 0 10px;
+    }
+    .copy-btn {
+      background: var(--accent); color: #fff; border: none;
+      padding: 10px 16px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-family: inherit; font-size: 0.92rem;
+      transition: background 0.15s ease;
+    }
+    .copy-btn:hover { background: var(--accent-dark); }
+    .pix-status {
+      margin-top: 14px;
+      font-size: 0.92rem;
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .pix-status .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .no-offer {
+      max-width: 520px;
+      margin: 60px auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .no-offer .ico {
+      width: 56px; height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: #fef3c7;
+      color: #92400e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; font-weight: 700;
+    }
+    .no-offer h2 { margin: 0 0 8px; font-size: 1.2rem; }
+    .no-offer p { color: var(--muted); margin: 0; font-size: 0.95rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <!-- Server injeta __OFFER_JSON__ aqui (objeto JSON ou null se nao encontrou) -->
+    <script>
+      window.__OFFER__ = __OFFER_JSON__;
+      window.__MP_PUBLIC_KEY__ = '__MP_PK_VAL__';
+      window.__CHECKOUT_GUARANTEE__ = '__GUARANTEE_DAYS__';
+    </script>
+
+    <div id="root"></div>
+  </main>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" id="modal-loading" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <h3 id="modal-loading-title">Processando seu pagamento...</h3>
+      <p id="modal-loading-body">Aguarde alguns segundos.</p>
+    </div>
+
+    <div class="modal err" id="modal-error" style="display:none;" role="alertdialog">
+      <div class="err-icon">!</div>
+      <h3 id="modal-error-title">Não foi possível processar o pagamento</h3>
+      <p id="modal-error-body">Tente novamente em alguns segundos.</p>
+      <button type="button" class="modal-btn" id="modal-close">Fechar</button>
+    </div>
+  </div>
+
+  <script>
+    const COUNTRIES = [
+      { name: 'Brasil', code: '55', iso: 'br' },
+      { name: 'Portugal', code: '351', iso: 'pt' },
+      { name: 'Estados Unidos', code: '1', iso: 'us' },
+      { name: 'Argentina', code: '54', iso: 'ar' },
+      { name: 'Chile', code: '56', iso: 'cl' },
+      { name: 'Colômbia', code: '57', iso: 'co' },
+      { name: 'México', code: '52', iso: 'mx' },
+      { name: 'Espanha', code: '34', iso: 'es' },
+      { name: 'Reino Unido', code: '44', iso: 'gb' },
+      { name: 'França', code: '33', iso: 'fr' },
+      { name: 'Alemanha', code: '49', iso: 'de' },
+      { name: 'Itália', code: '39', iso: 'it' },
+      { name: 'Japão', code: '81', iso: 'jp' }
+    ];
+
+    const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_page'];
+    const UTMS = (function () {
+      const out = {};
+      let fromUrl = false;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        for (const k of UTM_KEYS) {
+          const v = params.get(k);
+          if (v) { out[k] = v.slice(0, 255); fromUrl = true; }
+        }
+        if (fromUrl) sessionStorage.setItem('utms', JSON.stringify(out));
+        else {
+          const stored = sessionStorage.getItem('utms');
+          if (stored) Object.assign(out, JSON.parse(stored));
+        }
+      } catch (_) {}
+      if (!out.utm_page) {
+        try {
+          const ref = document.referrer;
+          if (ref) {
+            const u = new URL(ref);
+            if (u.host === window.location.host && u.pathname && u.pathname !== window.location.pathname) {
+              out.utm_page = u.pathname.slice(0, 255);
+            }
+          }
+        } catch (_) {}
+      }
+      for (const k of UTM_KEYS) if (!(k in out)) out[k] = '';
+      return out;
+    })();
+
+    const FUNNEL = (function () {
+      try {
+        const fromUrl = new URLSearchParams(window.location.search).get('funnel');
+        if (fromUrl && /^[a-z0-9_-]{1,40}$/i.test(fromUrl)) {
+          const v = fromUrl.toLowerCase();
+          sessionStorage.setItem('funnel', v);
+          return v;
+        }
+        const stored = sessionStorage.getItem('funnel');
+        if (stored && /^[a-z0-9_-]{1,40}$/i.test(stored)) return stored.toLowerCase();
+      } catch (_) {}
+      return '';
+    })();
+
+    // Atribuição Meta por ID (robusta a renomear anúncio). Vem da URL da LP:
+    // &meta_campaign_id={{campaign.id}}&meta_adset_id={{adset.id}}&meta_ad_id={{ad.id}};
+    // fbclid a Meta anexa sozinha no clique. Persiste em sessionStorage como as UTMs.
+    const META_KEYS = ['meta_campaign_id', 'meta_adset_id', 'meta_ad_id', 'fbclid'];
+    const META = (function () {
+      const out = {};
+      let fromUrl = false;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        for (const k of META_KEYS) {
+          const v = params.get(k);
+          if (v) { out[k] = v.slice(0, 255); fromUrl = true; }
+        }
+        if (fromUrl) sessionStorage.setItem('meta_ids', JSON.stringify(out));
+        else {
+          const stored = sessionStorage.getItem('meta_ids');
+          if (stored) Object.assign(out, JSON.parse(stored));
+        }
+      } catch (_) {}
+      for (const k of META_KEYS) if (!(k in out)) out[k] = '';
+      return out;
+    })();
+
+    const OUT_OF_STOCK_MESSAGE = 'As vendas deste produto estão temporariamente suspensas.\nEntraremos em contato por telefone e/ou e-mail assim que as vendas forem retomadas.';
+
+    // Dias de garantia definidos pela instância (GUARANTEE_DAYS). '0' esconde o bloco.
+    const GUARANTEE_DAYS = (function () {
+      const n = parseInt(window.__CHECKOUT_GUARANTEE__, 10);
+      return Number.isInteger(n) && n >= 0 ? n : 7;
+    })();
+
+    function fmtBrl(cents) {
+      const reais = Math.floor(cents / 100);
+      const c = String(cents % 100).padStart(2, '0');
+      return reais.toLocaleString('pt-BR') + ',' + c;
+    }
+
+    const root = document.getElementById('root');
+
+    // Mobile keyboard: quando um input ganha foco, espera o teclado abrir e rola
+    // o campo pro centro da viewport pra ele não ficar escondido atrás do teclado.
+    document.addEventListener('focusin', function (e) {
+      const t = e.target;
+      if (!t) return;
+      const tag = (t.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') return;
+      setTimeout(function () {
+        try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        catch (_) { try { t.scrollIntoView(); } catch (_) {} }
+      }, 300);
+    });
+
+    const offer = window.__OFFER__;
+    const OUT_OF_STOCK = !!(offer && offer.out_of_stock);
+
+    function thanksUrl(paymentId) {
+      const raw = (offer && typeof offer.thanks_url === 'string' && offer.thanks_url.trim()) || '/obrigado';
+      const normalized = /^https?:\/\//i.test(raw) ? raw : (raw.startsWith('/') ? raw : '/' + raw);
+      const target = new URL(normalized, window.location.origin);
+      target.searchParams.set('pid', paymentId || '');
+      if (FUNNEL) target.searchParams.set('funnel', FUNNEL);
+      for (const key of UTM_KEYS) {
+        if (UTMS[key]) target.searchParams.set(key, UTMS[key]);
+      }
+      for (const key of META_KEYS) {
+        if (META[key]) target.searchParams.set(key, META[key]);
+      }
+      return target.origin === window.location.origin
+        ? target.pathname + target.search + target.hash
+        : target.toString();
+    }
+
+    // Chegar ao checkout com uma oferta valida = InitiateCheckout. Dispara fbq + CAPI
+    // server-side com o MESMO eventID (dedup). Sinal confiavel pra otimizacao da campanha
+    // (o CTA da página de origem pode viver dentro de um player/iframe e nao disparar o IC).
+    let icFired = false;
+    function fireInitiateCheckout(offer) {
+      if (icFired || !offer) return;
+      icFired = true;
+      const eventId = 'ic-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+      const customData = {
+        value: offer.sale_price_cents / 100,
+        currency: 'BRL',
+        content_name: offer.name,
+        content_type: 'product',
+      };
+      try {
+        if (window.fbq) window.fbq('track', 'InitiateCheckout', customData, { eventID: eventId });
+      } catch (_) {}
+      try {
+        const capiBody = JSON.stringify({
+          event_name: 'InitiateCheckout',
+          event_id: eventId,
+          source: 'checkout',
+          offer_code: offer.code,
+          custom_data: customData,
+          funnel: FUNNEL,
+          utm_page: UTMS.utm_page,
+          meta_campaign_id: META.meta_campaign_id,
+          meta_adset_id: META.meta_adset_id,
+          meta_ad_id: META.meta_ad_id,
+          fbclid: META.fbclid,
+        });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/checkout-event', new Blob([capiBody], { type: 'application/json' }));
+        } else {
+          fetch('/api/checkout-event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: capiBody, keepalive: true }).catch(function () {});
+        }
+      } catch (_) {}
+    }
+
+    if (!offer) {
+      root.innerHTML = `
+        <div class="no-offer">
+          <div class="ico">!</div>
+          <h2>Oferta não encontrada</h2>
+          <p>O link de checkout que você acessou está inválido ou expirado.<br>Verifique o endereço com quem te enviou.</p>
+        </div>`;
+    } else {
+      renderCheckout(offer);
+      fireInitiateCheckout(offer);
+    }
+
+    function renderCheckout(offer) {
+      root.innerHTML = `
+        <div class="secure-banner" role="note" aria-label="Compra 100% segura">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3Z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <span>COMPRA 100% SEGURA</span>
+        </div>
+        <div class="layout">
+          <div>
+            <section class="card" id="card-personal">
+              <h2>Dados Pessoais</h2>
+              <p class="subtitle">Preencha seus dados para finalizar a compra.</p>
+
+              <label class="field-label" for="name">Seu Nome <span class="req">*</span></label>
+              <div class="field" id="f-name"><input type="text" id="name" autocomplete="name" /></div>
+              <span class="error-msg" id="err-name"></span>
+
+              <label class="field-label" for="email">E-mail que receberá a compra <span class="req">*</span></label>
+              <div class="field" id="f-email"><input type="email" id="email" autocomplete="email" /></div>
+              <span class="error-msg" id="err-email"></span>
+
+              <div class="phone-row">
+                <div class="ddi-wrap">
+                  <label class="field-label">País</label>
+                  <button type="button" class="ddi-trigger" id="ddi-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="fi fi-br" id="ddi-flag"></span>
+                    <span class="ddi-code" id="ddi-code">+55</span>
+                    <span class="ddi-chev">▾</span>
+                  </button>
+                  <div class="ddi-menu" id="ddi-menu" hidden>
+                    <div class="ddi-search-wrap">
+                      <input class="ddi-search" id="ddi-search" type="text" placeholder="Buscar país..." autocomplete="off" />
+                    </div>
+                    <ul class="ddi-list" id="ddi-list" role="listbox"></ul>
+                  </div>
+                </div>
+                <div>
+                  <label class="field-label" for="phone">Seu Celular <span class="req">*</span></label>
+                  <div class="field" id="f-phone" style="margin-bottom:0;">
+                    <input type="tel" id="phone" inputmode="numeric" autocomplete="tel-national" />
+                  </div>
+                </div>
+              </div>
+              <span class="error-msg" id="err-phone"></span>
+            </section>
+
+            ${(offer.order_bumps || []).length ? `
+            <section class="card order-bumps-card" id="order-bumps-card">
+              <h2 class="order-bumps-title"><span>➕</span> Complete seu pedido</h2>
+              <p class="subtitle">Marque os complementos que deseja adicionar.</p>
+              ${(offer.order_bumps || []).map((bump) => `
+                <label class="order-bump-option">
+                  <input type="checkbox" class="order-bump-checkbox" value="${Number(bump.id)}" />
+                  <span>
+                    <span class="order-bump-name">${escapeHtml(bump.name)}</span>
+                    ${bump.description ? `<span class="order-bump-description">${escapeHtml(bump.description)}</span>` : ''}
+                  </span>
+                  <span class="order-bump-price">+ R$ ${fmtBrl(bump.price_cents)}</span>
+                </label>`).join('')}
+            </section>` : ''}
+
+            <section class="card">
+              <h2>Pagamento</h2>
+              <p class="subtitle">Escolha como prefere pagar.</p>
+
+              <div class="method-tabs" role="tablist">
+                <button type="button" class="method-tab" id="tab-card" role="tab" aria-selected="false" data-method="card">
+                  <span class="ico">💳</span><span>Cartão de Crédito</span>
+                </button>
+                <button type="button" class="method-tab" id="tab-pix" role="tab" aria-selected="false" data-method="pix">
+                  <span class="ico">⚡</span><span>PIX</span>
+                </button>
+              </div>
+
+              <!-- Painel PIX -->
+              <div id="panel-pix" class="method-panel" hidden>
+                <div class="pix-info">
+                  <span class="ico">⚡</span>
+                  <span>Pague com PIX.</span>
+                </div>
+
+                <div id="pix-area">
+                  <button type="button" class="btn" id="btn-pay-pix">Gerar QR Code PIX</button>
+                </div>
+              </div>
+
+              <!-- Painel Cartão -->
+              <div id="panel-card" class="method-panel" hidden>
+                <div class="cc-info">
+                  <span class="ico">💳</span>
+                  <span>Pagamento processado pelo Mercado Pago. Aprovação na hora.</span>
+                </div>
+
+                <div id="card-area">
+                  <form id="form-card" novalidate>
+                    <label class="field-label">Número do cartão <span class="req">*</span></label>
+                    <div class="mp-field" id="mp-cardNumber"></div>
+                    <span class="error-msg" id="err-cardNumber"></span>
+
+                    <label class="field-label" for="cardholderName">Nome impresso no cartão <span class="req">*</span></label>
+                    <div class="field" id="f-cardholderName"><input type="text" id="cardholderName" autocomplete="cc-name" /></div>
+                    <span class="error-msg" id="err-cardholderName"></span>
+
+                    <div class="cc-grid">
+                      <div>
+                        <label class="field-label">Validade <span class="req">*</span></label>
+                        <div class="mp-field" id="mp-expirationDate"></div>
+                      </div>
+                      <div>
+                        <label class="field-label">CVV <span class="req">*</span></label>
+                        <div class="mp-field" id="mp-securityCode"></div>
+                      </div>
+                    </div>
+                    <span class="error-msg" id="err-cardSecurity"></span>
+
+                    <label class="field-label" for="cardholderDoc">CPF do titular <span class="req">*</span></label>
+                    <div class="field" id="f-cardholderDoc"><input type="text" id="cardholderDoc" inputmode="numeric" autocomplete="off" placeholder="Somente números" /></div>
+                    <span class="error-msg" id="err-cardholderDoc"></span>
+
+                    <label class="field-label" for="installments">Parcelamento</label>
+                    <select id="installments" class="cc-installments-select">
+                      <option value="1">1x de R$ ${fmtBrl(offer.sale_price_cents)} sem juros</option>
+                    </select>
+
+                    <div class="cc-brand-row" id="cc-brand-row" hidden></div>
+
+                    <button type="submit" class="btn btn-blue" id="btn-pay-card">Pagar com cartão</button>
+                  </form>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="sticky-col">
+            <div class="summary">
+              <div class="title">${escapeHtml(offer.name)}</div>
+              <div class="desc">${escapeHtml(offer.description || '')}</div>
+              <div class="price-block">
+                <div class="price-old">${offer.anchor_price_cents > 0 ? 'De <s>R$ ' + fmtBrl(offer.anchor_price_cents) + '</s>' : ''}</div>
+                <div class="price-new"><span class="from">por apenas</span>R$ ${fmtBrl(offer.sale_price_cents)}</div>
+              </div>
+              <hr class="divider" />
+              <div class="total-row">
+                <span class="total-label">Total</span>
+                <span class="total-value" id="checkout-total-value">R$ ${fmtBrl(offer.sale_price_cents)}</span>
+              </div>
+              <div class="selected-bumps-summary" id="selected-bumps-summary"></div>
+              ${GUARANTEE_DAYS > 0 ? `
+              <div class="guarantee-box" id="guarantee-box" aria-label="${guaranteeLabel(GUARANTEE_DAYS)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2 4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3Z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+                <div class="guarantee-copy">
+                  <b>${guaranteeLabel(GUARANTEE_DAYS)}</b>
+                  <small>Não gostou, devolvemos 100% do seu dinheiro.</small>
+                </div>
+              </div>` : ''}
+            </div>
+          </aside>
+        </div>`;
+
+      bindUI(offer);
+    }
+
+    function guaranteeLabel(days) {
+      return 'Garantia de ' + days + (days === 1 ? ' dia' : ' dias');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function bindUI(offer) {
+      const $ = (id) => document.getElementById(id);
+      const state = {
+        country: COUNTRIES[0],
+        leadId: null,
+        paymentId: null,
+        pollTimer: null,
+        method: null,
+        approved: false,
+        // card runtime state
+        mp: null,
+        cardFields: { cardNumber: null, expirationDate: null, securityCode: null },
+        cardBin: null,
+        paymentMethodId: null,
+        issuerId: null,
+        installmentsLoaded: false,
+        cardSubmitting: false,
+        leadPixelFired: false,
+        bumpSelectionLocked: false,
+        installmentRequestSeq: 0,
+      };
+
+      // Diagnóstico first-party do abandono: uma linha consolidada por abertura,
+      // sem nome/e-mail/telefone/cartão no payload. "hidden" significa apenas
+      // segundo plano; nunca inferimos fechamento de aba a partir desse sinal.
+      const analytics = {
+        visitUuid: (crypto && crypto.randomUUID) ? crypto.randomUUID() :
+          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0;
+            return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+          }),
+        lastStage: 'opened',
+        visibleMs: 0,
+        hiddenMs: 0,
+        visibleStarted: performance.now(),
+        hiddenStarted: null,
+        backgroundCount: 0,
+        resumeCount: 0,
+      };
+
+      function analyticsPayload(event) {
+        return {
+          visit_uuid: analytics.visitUuid,
+          event,
+          offer_code: offer.code,
+          lead_id: state.leadId,
+          last_stage: analytics.lastStage,
+          method: state.method,
+          visible_ms: Math.round(analytics.visibleMs),
+          hidden_ms: Math.round(analytics.hiddenMs),
+          background_count: analytics.backgroundCount,
+          resume_count: analytics.resumeCount,
+          bump_selected: selectedBumpIds().length > 0,
+          funnel: FUNNEL,
+          utm_page: UTMS.utm_page,
+        };
+      }
+
+      function sendAnalytics(event, useBeacon) {
+        try {
+          const body = JSON.stringify(analyticsPayload(event));
+          if (useBeacon && navigator.sendBeacon) {
+            navigator.sendBeacon('/api/checkout-analytics', new Blob([body], { type: 'application/json' }));
+            return;
+          }
+          fetch('/api/checkout-analytics', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+            keepalive: true,
+          }).catch(function () {});
+        } catch (_) { /* best-effort */ }
+      }
+
+      function accumulateVisibleTime() {
+        if (analytics.visibleStarted == null) return;
+        analytics.visibleMs += Math.max(0, performance.now() - analytics.visibleStarted);
+        analytics.visibleStarted = null;
+      }
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+          accumulateVisibleTime();
+          analytics.hiddenStarted = Date.now();
+          analytics.backgroundCount += 1;
+          sendAnalytics('hidden', true);
+        } else {
+          if (analytics.hiddenStarted != null) {
+            analytics.hiddenMs += Math.max(0, Date.now() - analytics.hiddenStarted);
+            analytics.hiddenStarted = null;
+          }
+          analytics.resumeCount += 1;
+          analytics.visibleStarted = performance.now();
+          sendAnalytics('resumed', false);
+        }
+      });
+      window.addEventListener('pagehide', function () {
+        accumulateVisibleTime();
+        sendAnalytics('pagehide', true);
+      });
+      window.addEventListener('pageshow', function (event) {
+        if (!event.persisted) return;
+        analytics.visibleStarted = performance.now();
+        analytics.resumeCount += 1;
+        sendAnalytics('pageshow', false);
+      });
+      if (window.navigation && window.navigation.addEventListener) {
+        window.navigation.addEventListener('navigate', function (event) {
+          if (event.navigationType === 'traverse') sendAnalytics('back_forward', true);
+        });
+      }
+      setInterval(function () {
+        if (document.visibilityState !== 'visible') return;
+        accumulateVisibleTime();
+        analytics.visibleStarted = performance.now();
+        sendAnalytics('heartbeat', false);
+      }, 30000);
+      sendAnalytics('opened', false);
+
+      function selectedBumpIds() {
+        return Array.from(document.querySelectorAll('.order-bump-checkbox:checked'))
+          .map((el) => Number(el.value))
+          .filter((id) => Number.isInteger(id) && id > 0);
+      }
+
+      function selectedBumps() {
+        const ids = new Set(selectedBumpIds());
+        return (offer.order_bumps || []).filter((bump) => ids.has(Number(bump.id)));
+      }
+
+      function currentTotalCents() {
+        return selectedBumps().reduce((total, bump) => total + Number(bump.price_cents || 0), Number(offer.sale_price_cents));
+      }
+
+      function updateCheckoutTotal() {
+        const total = currentTotalCents();
+        const totalEl = $('checkout-total-value');
+        if (totalEl) totalEl.textContent = 'R$ ' + fmtBrl(total);
+        const summaryEl = $('selected-bumps-summary');
+        if (summaryEl) summaryEl.textContent = selectedBumps().map((bump) => '+ ' + bump.name + ' (R$ ' + fmtBrl(bump.price_cents) + ')').join(' · ');
+        resetInstallments();
+        if (state.method === 'card') {
+          if (state.cardBin) loadInstallments(state.cardBin);
+          else preloadInstallments();
+        }
+      }
+
+      function setBumpSelectionLocked(locked) {
+        state.bumpSelectionLocked = Boolean(locked);
+        document.querySelectorAll('.order-bump-checkbox').forEach((checkbox) => {
+          checkbox.disabled = state.bumpSelectionLocked;
+        });
+      }
+
+      document.querySelectorAll('.order-bump-checkbox').forEach((checkbox) => {
+        checkbox.addEventListener('change', function () {
+          updateCheckoutTotal();
+          sendAnalytics('bump_changed', false);
+        });
+      });
+
+      try {
+        const stored = sessionStorage.getItem('leadId');
+        if (stored) {
+          const parsed = parseInt(stored, 10);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            state.leadId = parsed;
+            state.leadPixelFired = true;
+          }
+        }
+      } catch (_) {}
+
+      try {
+        const qp = new URLSearchParams(window.location.search);
+        const qpName  = qp.get('prefill_name');
+        const qpEmail = qp.get('prefill_email');
+        const qpPhone = qp.get('prefill_phone');
+        if (qpName  && !$('name').value)  $('name').value  = String(qpName).slice(0, 200);
+        if (qpEmail && !$('email').value) $('email').value = String(qpEmail).slice(0, 200);
+        if (qpPhone && !$('phone').value) $('phone').value = String(qpPhone).replace(/\D/g, '').slice(0, 15);
+      } catch (_) {}
+
+      try {
+        const leadRaw = sessionStorage.getItem('lead');
+        if (leadRaw) {
+          const lead = JSON.parse(leadRaw) || {};
+          if (lead.name && !$('name').value) $('name').value = String(lead.name).slice(0, 200);
+          if (lead.email && !$('email').value) $('email').value = String(lead.email).slice(0, 200);
+          if (lead.phone && !$('phone').value) $('phone').value = String(lead.phone).replace(/\D/g, '').slice(0, 15);
+        }
+      } catch (_) {}
+
+      // DDI dropdown
+      const ddiTrigger = $('ddi-trigger');
+      const ddiMenu = $('ddi-menu');
+      const ddiList = $('ddi-list');
+      const ddiSearch = $('ddi-search');
+      const ddiFlag = $('ddi-flag');
+      const ddiCode = $('ddi-code');
+
+      function renderDdiList(filter) {
+        const q = (filter || '').toLowerCase().trim();
+        const items = COUNTRIES.filter((c) => {
+          if (!q) return true;
+          return c.name.toLowerCase().includes(q) || c.code.includes(q.replace(/\+/g, ''));
+        });
+        if (!items.length) { ddiList.innerHTML = '<li class="ddi-empty">Nenhum país encontrado</li>'; return; }
+        ddiList.innerHTML = items.map((c) => `
+          <li class="ddi-item${c.iso === state.country.iso && c.code === state.country.code ? ' active' : ''}"
+              role="option" data-iso="${c.iso}" data-name="${c.name.replace(/"/g, '&quot;')}" data-code="${c.code}">
+            <span class="fi fi-${c.iso}"></span>
+            <span class="ddi-item-name">${c.name}</span>
+            <span class="ddi-item-code">+${c.code}</span>
+          </li>`).join('');
+      }
+      function openDdi() {
+        renderDdiList('');
+        ddiMenu.hidden = false;
+        ddiTrigger.classList.add('open');
+        ddiTrigger.setAttribute('aria-expanded', 'true');
+        setTimeout(() => ddiSearch.focus(), 0);
+      }
+      function closeDdi() {
+        ddiMenu.hidden = true;
+        ddiTrigger.classList.remove('open');
+        ddiTrigger.setAttribute('aria-expanded', 'false');
+        ddiSearch.value = '';
+      }
+      ddiTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        ddiMenu.hidden ? openDdi() : closeDdi();
+      });
+      ddiSearch.addEventListener('input', (e) => renderDdiList(e.target.value));
+      ddiSearch.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDdi(); });
+      ddiList.addEventListener('click', (e) => {
+        const item = e.target.closest('.ddi-item');
+        if (!item) return;
+        state.country = {
+          iso: item.getAttribute('data-iso'),
+          name: item.getAttribute('data-name'),
+          code: item.getAttribute('data-code'),
+        };
+        ddiFlag.className = 'fi fi-' + state.country.iso;
+        ddiCode.textContent = '+' + state.country.code;
+        closeDdi();
+      });
+      document.addEventListener('click', (e) => {
+        if (!ddiMenu.hidden && !ddiMenu.contains(e.target) && e.target !== ddiTrigger && !ddiTrigger.contains(e.target)) closeDdi();
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !ddiMenu.hidden) closeDdi(); });
+
+      // Phone formatting
+      $('phone').addEventListener('input', function (e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 15);
+      });
+
+      // Field-progression tracking: registra lead parcial conforme
+      // o usuário preenche nome → email → telefone. Cada etapa só dispara
+      // uma vez por sessão e exige os campos anteriores preenchidos.
+      const fieldTrack = { nome: false, email: false, telefone: false, escolheu_metodo: false };
+      // Fila serial das chamadas de progressão. Cada etapa (nome→email→telefone→
+      // método) só dispara depois que a anterior retornou o id da lead: assim a
+      // 2ª chamada já manda `id` e o servidor faz UPDATE em vez de INSERT. Sem
+      // isso, blur/autofill em rajada disparava várias chamadas concorrentes com
+      // id=null e cada uma criava uma lead nova da mesma pessoa.
+      let leadOpChain = Promise.resolve();
+      function trackLeadStage(status, payload) {
+        if (fieldTrack[status]) return;
+        fieldTrack[status] = true;
+        analytics.lastStage = status;
+        leadOpChain = leadOpChain.then(function () {
+          // Monta o body AQUI (não antes) pra ler state.leadId já atualizado pela
+          // etapa anterior da fila.
+          const body = JSON.stringify(Object.assign({
+            id: state.leadId,
+            status,
+            funnel: FUNNEL,
+            offer_code: offer.code,
+            utm_source: UTMS.utm_source,
+            utm_medium: UTMS.utm_medium,
+            utm_campaign: UTMS.utm_campaign,
+            utm_term: UTMS.utm_term,
+            utm_content: UTMS.utm_content,
+            utm_page: UTMS.utm_page,
+            meta_campaign_id: META.meta_campaign_id,
+            meta_adset_id: META.meta_adset_id,
+            meta_ad_id: META.meta_ad_id,
+            fbclid: META.fbclid,
+          }, payload));
+          return fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+            keepalive: true,
+          })
+            .then((r) => r.json().catch(() => ({})))
+            .then((data) => {
+              if (data && data.ok && data.id) {
+                state.leadId = data.id;
+                try { sessionStorage.setItem('leadId', String(data.id)); } catch (_) {}
+                sendAnalytics('heartbeat', false);
+              }
+            })
+            .catch(() => {});
+        });
+        return leadOpChain;
+      }
+      function buildPhoneE164() {
+        const raw = $('phone').value.replace(/\D/g, '');
+        if (!raw || raw.length < 6) return '';
+        return '+' + state.country.code + ' ' + raw;
+      }
+      $('name').addEventListener('blur', function () {
+        const v = (this.value || '').trim();
+        if (!v) return;
+        trackLeadStage('nome', { name: v });
+      });
+      $('email').addEventListener('blur', function () {
+        const name = $('name').value.trim();
+        const email = (this.value || '').trim();
+        if (!name || checkoutEmailError(email)) return;
+        trackLeadStage('email', { name, email });
+      });
+      $('phone').addEventListener('blur', function () {
+        const name = $('name').value.trim();
+        const email = $('email').value.trim();
+        const phone = buildPhoneE164();
+        if (!name || !email || !phone) return;
+        if (checkoutEmailError(email)) return;
+        trackLeadStage('telefone', { name, email, phone });
+      });
+
+      // Method tabs
+      function selectMethod(method) {
+        state.method = method;
+        analytics.lastStage = 'escolheu_metodo';
+        sendAnalytics('method_selected', false);
+        $('tab-pix').classList.toggle('active', method === 'pix');
+        $('tab-card').classList.toggle('active', method === 'card');
+        $('tab-pix').setAttribute('aria-selected', method === 'pix' ? 'true' : 'false');
+        $('tab-card').setAttribute('aria-selected', method === 'card' ? 'true' : 'false');
+        $('panel-pix').hidden = method !== 'pix';
+        $('panel-card').hidden = method !== 'card';
+        if (method === 'card') {
+          if (OUT_OF_STOCK) {
+            setupFakeCardInputs();
+          } else {
+            ensureMpCardFields();
+            if (!state.installmentsLoaded) preloadInstallments();
+          }
+        }
+        const _name = $('name').value.trim();
+        if (_name) {
+          trackLeadStage('escolheu_metodo', {
+            name: _name,
+            email: $('email').value.trim(),
+            phone: buildPhoneE164(),
+          });
+        }
+      }
+      $('tab-pix').addEventListener('click', () => selectMethod('pix'));
+      $('tab-card').addEventListener('click', () => selectMethod('card'));
+
+      // CPF mask
+      function maskCpf(v) {
+        const d = String(v || '').replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 3) return d;
+        if (d.length <= 6) return d.slice(0, 3) + '.' + d.slice(3);
+        if (d.length <= 9) return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6);
+        return d.slice(0, 3) + '.' + d.slice(3, 6) + '.' + d.slice(6, 9) + '-' + d.slice(9);
+      }
+      $('cardholderDoc').addEventListener('input', function (e) {
+        e.target.value = maskCpf(e.target.value);
+      });
+      function isValidCPF(cpf) {
+        const c = String(cpf || '').replace(/\D/g, '');
+        if (c.length !== 11) return false;
+        if (/^(\d)\1{10}$/.test(c)) return false;
+        let s = 0;
+        for (let i = 0; i < 9; i++) s += parseInt(c[i], 10) * (10 - i);
+        let d1 = 11 - (s % 11); if (d1 >= 10) d1 = 0;
+        if (d1 !== parseInt(c[9], 10)) return false;
+        s = 0;
+        for (let i = 0; i < 10; i++) s += parseInt(c[i], 10) * (11 - i);
+        let d2 = 11 - (s % 11); if (d2 >= 10) d2 = 0;
+        return d2 === parseInt(c[10], 10);
+      }
+
+      function setError(fieldId, errId, msg) {
+        const f = $(fieldId);
+        if (f) f.classList.toggle('error', !!msg);
+        const e = $(errId);
+        if (e) e.textContent = msg || '';
+      }
+      function checkoutEmailError(value) {
+        const email = String(value || '').trim();
+        if (!email) return 'Informe seu e-mail';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return 'Digite um e-mail válido (ex.: nome@gmail.com)';
+        }
+
+        const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+        const labels = domain.split('.');
+        if (!/^[a-z0-9.-]+$/i.test(domain) || domain.includes('..') || labels.some(function (label) {
+          return !label || label.charAt(0) === '-' || label.charAt(label.length - 1) === '-';
+        })) {
+          return 'Digite um e-mail válido (ex.: nome@gmail.com)';
+        }
+
+        const tld = labels[labels.length - 1];
+        if (['comm', 'con', 'coom', 'cpm'].indexOf(tld) !== -1) {
+          return 'Confira o final do e-mail: use .com, não .comm';
+        }
+        return '';
+      }
+      function validatePersonal() {
+        let ok = true;
+        const name = $('name').value.trim();
+        const email = $('email').value.trim();
+        const rawPhone = $('phone').value.replace(/\D/g, '');
+        if (!name) { setError('f-name', 'err-name', 'O Nome é obrigatório'); ok = false; } else setError('f-name', 'err-name', '');
+        const emailError = checkoutEmailError(email);
+        if (emailError) { setError('f-email', 'err-email', emailError); ok = false; } else setError('f-email', 'err-email', '');
+        if (!rawPhone || rawPhone.length < 6) { setError('f-phone', 'err-phone', 'Celular inválido'); ok = false; } else setError('f-phone', 'err-phone', '');
+        if (!ok) {
+          sendAnalytics('validation_error', false);
+          return null;
+        }
+        return { name, email, phone: '+' + state.country.code + ' ' + rawPhone };
+      }
+
+      const overlay = $('overlay');
+      const modalLoading = $('modal-loading');
+      const modalError = $('modal-error');
+      function showLoading(title, body) {
+        if (title) $('modal-loading-title').textContent = title;
+        if (body) $('modal-loading-body').textContent = body;
+        modalLoading.style.display = '';
+        modalError.style.display = 'none';
+        overlay.classList.add('show');
+      }
+      function hideOverlay() {
+        overlay.classList.remove('show');
+      }
+      function showError(msg, title) {
+        modalLoading.style.display = 'none';
+        modalError.style.display = '';
+        if (title) $('modal-error-title').textContent = title;
+        if (msg) $('modal-error-body').textContent = msg;
+        overlay.classList.add('show');
+      }
+      $('modal-close').addEventListener('click', hideOverlay);
+
+      function isEmailPixError(code, detail) {
+        if (code === 'invalid_email') return true;
+        return /payer\.email|valid email|invalid[^\n]*email|email[^\n]*invalid/i.test(String(detail || ''));
+      }
+
+      function friendlyPixError(code, detail) {
+        if (isEmailPixError(code, detail)) {
+          return 'Confira o e-mail informado:\n\n• Veja se não há letras ou espaços a mais.\n• Confirme o final do endereço (ex.: .com, e não .comm).\n\nCorrija o e-mail e tente gerar o Pix novamente.';
+        }
+
+        const messages = {
+          missing_fields: 'Preencha seu nome, e-mail e celular antes de gerar o Pix.',
+          price_changed: 'O valor do checkout foi atualizado. Feche este aviso, confira o total e tente novamente.',
+          invalid_offer_code: 'Este link de checkout não é válido. Volte à página da oferta e tente novamente.',
+          offer_not_found: 'Esta oferta não está disponível neste link. Atualize a página ou volte à página da oferta.',
+        };
+        if (messages[code]) return messages[code];
+
+        return 'Revise os dados do checkout:\n\n• E-mail: confira letras, espaços e o final do endereço.\n• Nome e celular: confirme se estão completos.\n\nSe estiver tudo certo, aguarde alguns instantes e tente novamente.';
+      }
+
+      function reportPaymentError(stage, errorCode, errorDetail) {
+        try {
+          const payload = {
+            stage,
+            error_code: String(errorCode || stage).slice(0, 120),
+            error_detail: String(errorDetail || '').slice(0, 500),
+            offer_code: offer.code,
+            lead_id: state.leadId,
+            funnel: FUNNEL,
+            utm_source: UTMS.utm_source,
+            utm_medium: UTMS.utm_medium,
+            utm_campaign: UTMS.utm_campaign,
+            utm_term: UTMS.utm_term,
+            utm_content: UTMS.utm_content,
+            utm_page: UTMS.utm_page,
+            meta_campaign_id: META.meta_campaign_id,
+            meta_adset_id: META.meta_adset_id,
+            meta_ad_id: META.meta_ad_id,
+            fbclid: META.fbclid,
+          };
+          const body = JSON.stringify(payload);
+          if (navigator.sendBeacon) {
+            const blob = new Blob([body], { type: 'application/json' });
+            navigator.sendBeacon('/api/mp/log-error', blob);
+          } else {
+            fetch('/api/mp/log-error', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body,
+              keepalive: true,
+            }).catch(() => {});
+          }
+        } catch (_) { /* best-effort */ }
+      }
+
+      // ============ Fluxo "fake" para ofertas out_of_stock ============
+      // Quando offer.out_of_stock=1, os handlers de Pix e Cartão entram
+      // por aqui em vez de chamar o Mercado Pago. Marca lead como 'comprou',
+      // dispara fbq('Purchase') + CAPI server-side com o mesmo eventID (dedup)
+      // e exibe modal "vendas suspensas".
+      function buildFakeLeadBody(personal, method) {
+        return {
+          id: state.leadId,
+          name: personal.name,
+          email: personal.email,
+          phone: personal.phone,
+          method,
+          status: 'comprou',
+          offer_code: offer.code,
+          order_bump_ids: selectedBumpIds(),
+          expected_total_cents: currentTotalCents(),
+          utm_source: UTMS.utm_source,
+          utm_medium: UTMS.utm_medium,
+          utm_campaign: UTMS.utm_campaign,
+          utm_term: UTMS.utm_term,
+          utm_content: UTMS.utm_content,
+          utm_page: UTMS.utm_page,
+          meta_campaign_id: META.meta_campaign_id,
+          meta_adset_id: META.meta_adset_id,
+          meta_ad_id: META.meta_ad_id,
+          fbclid: META.fbclid,
+          funnel: FUNNEL,
+        };
+      }
+
+      let fakeSaleFired = false;
+      async function fakeFireSale(personal, method) {
+        if (fakeSaleFired) return;
+        fakeSaleFired = true;
+        try {
+          const resp = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(buildFakeLeadBody(personal, method)),
+            keepalive: true,
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok || !data.ok || !data.id) { fakeSaleFired = false; return; }
+          if (data && data.ok && data.id) {
+            state.leadId = data.id;
+            try { sessionStorage.setItem('leadId', String(state.leadId)); } catch (_) {}
+          }
+        } catch (_) { fakeSaleFired = false; return; }
+
+        const eventId = 'purchase-fake-' + (state.leadId || 'anon') + '-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+        state.method = method;
+
+        firePurchasePixel({
+          meta_event_id: eventId,
+          amount_cents: currentTotalCents(),
+          payment_id: 'fake',
+        });
+
+        try {
+          const customData = {
+            value: currentTotalCents() / 100,
+            currency: 'BRL',
+            content_name: offer.name,
+            content_type: 'product',
+            payment_method: method === 'card' ? 'credit_card' : 'pix',
+          };
+          const capiBody = JSON.stringify({
+            event_name: 'Purchase',
+            event_id: eventId,
+            source: 'checkout',
+            offer_code: offer.code,
+            custom_data: customData,
+            user_data: { name: personal.name, email: personal.email, phone: personal.phone },
+            lead_id: state.leadId,
+            funnel: FUNNEL,
+            utm_page: UTMS.utm_page,
+            meta_campaign_id: META.meta_campaign_id,
+            meta_adset_id: META.meta_adset_id,
+            meta_ad_id: META.meta_ad_id,
+            fbclid: META.fbclid,
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/checkout-event', new Blob([capiBody], { type: 'application/json' }));
+          } else {
+            fetch('/api/checkout-event', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: capiBody,
+              keepalive: true,
+            }).catch(() => {});
+          }
+        } catch (_) {}
+      }
+
+      async function submitFakePix() {
+        const personal = validatePersonal();
+        if (!personal) return;
+        showLoading('Gerando seu PIX...', 'Estamos preparando seu pagamento.');
+        await new Promise((r) => setTimeout(r, 3500));
+        await fakeFireSale(personal, 'pix');
+        showError(OUT_OF_STOCK_MESSAGE, 'PIX indisponível no momento.');
+      }
+
+      let fakeCardSetup = false;
+      let fakeCardFrozen = false;
+      let fakeCardFailureTriggered = false;
+      const FAKE_CARD_FREEZE_AT = 5;
+
+      function setupFakeCardInputs() {
+        if (fakeCardSetup) return;
+        fakeCardSetup = true;
+        const mpCard = $('mp-cardNumber');
+        if (mpCard) mpCard.innerHTML = '<input type="tel" id="fake-cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" style="width:100%;height:100%;border:0;background:transparent;outline:none;font:inherit;color:inherit;" />';
+        const mpExp = $('mp-expirationDate');
+        if (mpExp) mpExp.innerHTML = '<input type="tel" id="fake-cardExpiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" style="width:100%;height:100%;border:0;background:transparent;outline:none;font:inherit;color:inherit;" />';
+        const mpCvv = $('mp-securityCode');
+        if (mpCvv) mpCvv.innerHTML = '<input type="tel" id="fake-cardCvv" inputmode="numeric" autocomplete="cc-csc" placeholder="CVV" style="width:100%;height:100%;border:0;background:transparent;outline:none;font:inherit;color:inherit;" />';
+
+        const fakeExp = $('fake-cardExpiry');
+        if (fakeExp) {
+          fakeExp.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+            if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+            e.target.value = v;
+          });
+        }
+        const fakeCvv = $('fake-cardCvv');
+        if (fakeCvv) {
+          fakeCvv.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+          });
+        }
+        const fakeCard = $('fake-cardNumber');
+        if (fakeCard) {
+          fakeCard.addEventListener('input', (e) => {
+            if (fakeCardFrozen) return;
+            let digits = e.target.value.replace(/\D/g, '');
+            if (digits.length >= FAKE_CARD_FREEZE_AT) {
+              digits = digits.slice(0, FAKE_CARD_FREEZE_AT);
+              e.target.value = digits;
+              fakeCardFrozen = true;
+              triggerFakeCardFailure();
+              return;
+            }
+            e.target.value = digits;
+          });
+        }
+      }
+
+      function lockFakeCheckoutInputs() {
+        document.querySelectorAll('input, select, button').forEach((el) => {
+          if (el.id !== 'modal-close') el.disabled = true;
+        });
+      }
+
+      async function triggerFakeCardFailure() {
+        if (fakeCardFailureTriggered) return;
+        fakeCardFailureTriggered = true;
+        const personal = validatePersonal();
+        const cardholderName = $('cardholderName').value.trim();
+        if (!cardholderName) {
+          setError('f-cardholderName', 'err-cardholderName', 'Informe o nome impresso no cartão');
+        }
+        lockFakeCheckoutInputs();
+        if (personal) {
+          await fakeFireSale(personal, 'card');
+        }
+        showError(OUT_OF_STOCK_MESSAGE, 'Seu cartão não foi cobrado.');
+      }
+
+      function submitFakeCard() {
+        const personal = validatePersonal();
+        const cardholderName = $('cardholderName').value.trim();
+        if (!cardholderName) {
+          setError('f-cardholderName', 'err-cardholderName', 'Informe o nome impresso no cartão');
+        } else {
+          setError('f-cardholderName', 'err-cardholderName', '');
+        }
+        if (!personal || !cardholderName) return;
+        const fakeCard = $('fake-cardNumber');
+        if (fakeCard) fakeCard.focus();
+      }
+
+      // ============ PIX flow ============
+      $('btn-pay-pix').addEventListener('click', async function () {
+        analytics.lastStage = 'payment_attempt';
+        sendAnalytics('payment_attempt', false);
+        if (OUT_OF_STOCK) return submitFakePix();
+        const personal = validatePersonal();
+        if (!personal) return;
+        setBumpSelectionLocked(true);
+        showLoading('Gerando seu PIX...', 'Estamos preparando seu pagamento.');
+
+        // Espera a fila de progressão (o blur no clique pode ter enfileirado a
+        // etapa 'telefone'): garante que a lead da pessoa já exista antes do
+        // create-pix, pra ele reaproveitá-la em vez de criar outra.
+        await leadOpChain.catch(function () {});
+
+        try {
+          const resp = await fetch('/api/mp/create-pix', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              offer_code: offer.code,
+              order_bump_ids: selectedBumpIds(),
+              expected_total_cents: currentTotalCents(),
+              name: personal.name,
+              email: personal.email,
+              phone: personal.phone,
+              lead_id: state.leadId,
+              utm_source: UTMS.utm_source,
+              utm_medium: UTMS.utm_medium,
+              utm_campaign: UTMS.utm_campaign,
+              utm_term: UTMS.utm_term,
+              utm_content: UTMS.utm_content,
+              utm_page: UTMS.utm_page,
+            meta_campaign_id: META.meta_campaign_id,
+            meta_adset_id: META.meta_adset_id,
+            meta_ad_id: META.meta_ad_id,
+            fbclid: META.fbclid,
+              funnel: FUNNEL,
+            }),
+          });
+          const data = await resp.json();
+          if (data && data.already_paid) {
+            // Já comprou este produto: vai direto pra página de obrigado, sem novo Pix.
+            // O servidor não devolve IDs nesse caso (chamada não autenticada).
+            try { sessionStorage.removeItem('leadId'); } catch (_) {}
+            window.location.href = thanksUrl('');
+            return;
+          }
+          if (!resp.ok || !data.ok) {
+            setBumpSelectionLocked(false);
+            const errorCode = data && data.error;
+            const errorDetail = data && data.detail;
+            if (isEmailPixError(errorCode, errorDetail)) {
+              setError('f-email', 'err-email', 'Confira se o e-mail foi digitado corretamente');
+            }
+            const msg = friendlyPixError(errorCode, errorDetail);
+            showError(msg, 'Não foi possível gerar o PIX');
+            return;
+          }
+          if (data.lead_id) {
+            state.leadId = data.lead_id;
+            try { sessionStorage.setItem('leadId', String(data.lead_id)); } catch (_) {}
+            fireLeadPixel(data.meta_lead_event_id);
+          }
+          state.paymentId = data.payment_id;
+          hideOverlay();
+          renderQR(data.qr_code, data.qr_code_base64);
+          startPolling(data.payment_id, 'pix');
+        } catch (err) {
+          setBumpSelectionLocked(false);
+          reportPaymentError('network', 'pix_network', String(err && err.message || err));
+          showError('Erro de conexão. Verifique sua internet e tente novamente.', 'Não foi possível gerar o PIX');
+        }
+      });
+
+      function renderQR(qrCode, qrBase64) {
+        const area = $('pix-area');
+        area.innerHTML = `
+          <div class="qr-wrap">
+            <p style="margin:0 0 6px;font-weight:600;">Escaneie o QR Code abaixo</p>
+            <img class="qr-img" src="data:image/png;base64,${qrBase64}" alt="QR Code PIX" />
+            <p style="margin:0 0 6px;color:#6b7280;font-size:.88rem;">Ou copie o código PIX:</p>
+            <div class="qr-code-box" id="qr-code-text">${escapeHtml(qrCode)}</div>
+            <button type="button" class="copy-btn" id="copy-pix">Copiar código PIX</button>
+            <div class="pix-status" id="pix-status">
+              <span class="dot"></span>
+              <span>Aguardando pagamento...</span>
+            </div>
+          </div>`;
+        $('copy-pix').addEventListener('click', async function () {
+          try {
+            await navigator.clipboard.writeText(qrCode);
+            this.textContent = 'Copiado!';
+            setTimeout(() => { this.textContent = 'Copiar código PIX'; }, 2200);
+          } catch (_) {
+            const r = document.createRange();
+            r.selectNodeContents($('qr-code-text'));
+            const sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(r);
+          }
+        });
+      }
+
+      // ============ Cartão (Mercado Pago SDK v2) ============
+      function ensureMpInstance() {
+        if (state.mp) return state.mp;
+        if (!window.MercadoPago) {
+          showError('Falha ao carregar a SDK do Mercado Pago. Recarregue a página e tente novamente.', 'Erro ao carregar pagamento');
+          return null;
+        }
+        if (!window.__MP_PUBLIC_KEY__ || /^__/.test(window.__MP_PUBLIC_KEY__)) {
+          showError('Configuração de pagamento ausente.', 'Erro ao carregar pagamento');
+          return null;
+        }
+        state.mp = new MercadoPago(window.__MP_PUBLIC_KEY__, { locale: 'pt-BR' });
+        return state.mp;
+      }
+
+      async function ensureMpCardFields() {
+        if (state.cardFields.cardNumber) return;
+        const mp = ensureMpInstance();
+        if (!mp) return;
+
+        const baseStyle = {
+          fontSize: '16px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          color: '#0b0b0b',
+          placeholderColor: '#94a3b8',
+        };
+
+        try {
+          state.cardFields.cardNumber = mp.fields.create('cardNumber', {
+            placeholder: '1234 1234 1234 1234',
+            style: baseStyle,
+          }).mount('mp-cardNumber');
+
+          state.cardFields.expirationDate = mp.fields.create('expirationDate', {
+            placeholder: 'MM/AA',
+            style: baseStyle,
+          }).mount('mp-expirationDate');
+
+          state.cardFields.securityCode = mp.fields.create('securityCode', {
+            placeholder: 'CVV',
+            style: baseStyle,
+          }).mount('mp-securityCode');
+        } catch (err) {
+          showError('Não conseguimos carregar o formulário de cartão. Tente novamente.', 'Erro ao carregar pagamento');
+          return;
+        }
+
+        // Focus styling for the iframe wrappers
+        const wrap = (id) => document.getElementById(id);
+        function attach(id, field) {
+          if (!field) return;
+          field.on && field.on('focus', () => {
+            const el = wrap(id);
+            if (!el) return;
+            el.classList.add('mp-focused');
+            // Iframe do MP captura o foco; rolamos o wrapper pra fora do teclado mobile.
+            setTimeout(() => {
+              try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
+            }, 300);
+          });
+          field.on && field.on('blur', () => wrap(id) && wrap(id).classList.remove('mp-focused'));
+          field.on && field.on('error', (e) => {
+            const isErr = !!(e && e.length);
+            wrap(id) && wrap(id).classList.toggle('error', isErr);
+          });
+          field.on && field.on('validityChange', (e) => {
+            const isErr = !!(e && e.errorMessages && e.errorMessages.length);
+            wrap(id) && wrap(id).classList.toggle('error', isErr);
+          });
+        }
+        attach('mp-cardNumber', state.cardFields.cardNumber);
+        attach('mp-expirationDate', state.cardFields.expirationDate);
+        attach('mp-securityCode', state.cardFields.securityCode);
+
+        // BIN -> payment method + installments
+        if (state.cardFields.cardNumber.on) {
+          state.cardFields.cardNumber.on('binChange', async (event) => {
+            const bin = event && event.bin;
+            state.cardBin = bin && bin.length >= 6 ? bin : null;
+            if (!bin || bin.length < 6) {
+              clearBrand();
+              resetInstallments();
+              return;
+            }
+            try {
+              const pms = await mp.getPaymentMethods({ bin });
+              if (state.cardBin !== bin) return;
+              const pm = pms && pms.results && pms.results[0];
+              if (!pm) { clearBrand(); resetInstallments(); return; }
+              state.paymentMethodId = pm.id;
+              state.issuerId = pm.issuer && pm.issuer.id ? pm.issuer.id : null;
+              showBrand(pm);
+              await loadInstallments(bin);
+            } catch (_) {
+              if (state.cardBin === bin) { clearBrand(); resetInstallments(); }
+            }
+          });
+        }
+      }
+
+      function clearBrand() {
+        const row = $('cc-brand-row');
+        if (row) { row.hidden = true; row.innerHTML = ''; }
+        state.paymentMethodId = null;
+        state.issuerId = null;
+      }
+      function showBrand(pm) {
+        const row = $('cc-brand-row');
+        if (!row) return;
+        row.hidden = false;
+        const thumb = pm.thumbnail || (pm.secure_thumbnail || '');
+        row.innerHTML = `
+          ${thumb ? `<img src="${thumb}" alt="${escapeHtml(pm.name || '')}" style="height:18px;width:auto;border-radius:3px;background:#fff;" />` : ''}
+          <span class="brand-pill">${escapeHtml((pm.name || pm.id || '').toUpperCase())}</span>
+        `;
+      }
+      function resetInstallments() {
+        const sel = $('installments');
+        if (!sel) return;
+        state.installmentRequestSeq += 1;
+        sel.innerHTML = `<option value="1">1x de R$ ${fmtBrl(currentTotalCents())} sem juros</option>`;
+        sel.value = '1';
+        state.installmentsLoaded = false;
+      }
+      function populateInstallments(payerCosts) {
+        if (!payerCosts || !payerCosts.length) { resetInstallments(); return; }
+        const sel = $('installments');
+        sel.innerHTML = payerCosts.map((c) => {
+          const each = (Number(c.installment_amount) || 0).toFixed(2).replace('.', ',');
+          const total = (Number(c.total_amount) || 0).toFixed(2).replace('.', ',');
+          const hasInterest = Number(c.installment_rate) > 0;
+          let label;
+          if (c.installments === 1) {
+            label = `1x de R$ ${each} sem juros`;
+          } else if (hasInterest) {
+            label = `${c.installments}x de R$ ${each} (total R$ ${total} com juros)`;
+          } else {
+            label = `${c.installments}x de R$ ${each} sem juros`;
+          }
+          return `<option value="${c.installments}">${label}</option>`;
+        }).join('');
+        state.installmentsLoaded = true;
+      }
+      async function preloadInstallments() {
+        // Carrega via REST direto com public_key (mp.getInstallments do SDK v2 exige BIN).
+        // As taxas do MP são iguais entre bandeiras, então o resultado é fiel.
+        if (!window.__MP_PUBLIC_KEY__ || /^__/.test(window.__MP_PUBLIC_KEY__)) return;
+        const amountCents = currentTotalCents();
+        const requestId = ++state.installmentRequestSeq;
+        try {
+          const params = new URLSearchParams({
+            public_key: window.__MP_PUBLIC_KEY__,
+            amount: (amountCents / 100).toFixed(2),
+            payment_method_id: 'master',
+          });
+          const resp = await fetch('https://api.mercadopago.com/v1/payment_methods/installments?' + params.toString());
+          const data = await resp.json();
+          if (requestId !== state.installmentRequestSeq || amountCents !== currentTotalCents()) return;
+          const opt = data && data[0] && data[0].payer_costs;
+          populateInstallments(opt);
+        } catch (_) { /* mantém fallback de 1x */ }
+      }
+      async function loadInstallments(bin) {
+        if (state.cardBin && state.cardBin !== bin) return;
+        const amountCents = currentTotalCents();
+        const requestId = ++state.installmentRequestSeq;
+        try {
+          const data = await state.mp.getInstallments({
+            amount: (amountCents / 100).toFixed(2),
+            bin,
+            paymentTypeId: 'credit_card',
+          });
+          if (requestId !== state.installmentRequestSeq || amountCents !== currentTotalCents() || (state.cardBin && state.cardBin !== bin)) return;
+          const opt = data && data[0] && data[0].payer_costs;
+          populateInstallments(opt);
+        } catch (_) {
+          if (requestId === state.installmentRequestSeq && (!state.cardBin || state.cardBin === bin)) resetInstallments();
+        }
+      }
+
+      $('form-card').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        analytics.lastStage = 'payment_attempt';
+        sendAnalytics('payment_attempt', false);
+        if (OUT_OF_STOCK) return submitFakeCard();
+        if (state.cardSubmitting) return;
+
+        const personal = validatePersonal();
+        if (!personal) return;
+
+        // Card-specific validations
+        let ok = true;
+        const cardholderName = $('cardholderName').value.trim();
+        const cpfRaw = $('cardholderDoc').value.replace(/\D/g, '');
+
+        if (!cardholderName || cardholderName.split(' ').length < 2) {
+          setError('f-cardholderName', 'err-cardholderName', 'Informe o nome impresso no cartão');
+          ok = false;
+        } else setError('f-cardholderName', 'err-cardholderName', '');
+
+        if (!isValidCPF(cpfRaw)) {
+          setError('f-cardholderDoc', 'err-cardholderDoc', 'CPF inválido');
+          ok = false;
+        } else setError('f-cardholderDoc', 'err-cardholderDoc', '');
+
+        if (!state.paymentMethodId) {
+          setError('mp-cardNumber', 'err-cardNumber', 'Número do cartão inválido');
+          ok = false;
+        } else setError('mp-cardNumber', 'err-cardNumber', '');
+
+        if (!ok) {
+          sendAnalytics('validation_error', false);
+          return;
+        }
+
+        const installments = parseInt($('installments').value, 10) || 1;
+
+        state.cardSubmitting = true;
+        setBumpSelectionLocked(true);
+        $('btn-pay-card').disabled = true;
+        showLoading('Processando seu pagamento...', 'Não feche esta página.');
+
+        // Espera a fila de progressão commitar a lead da pessoa antes do
+        // create-card, pra ele reaproveitá-la em vez de criar outra.
+        await leadOpChain.catch(function () {});
+
+        let token;
+        try {
+          const tokenResp = await state.mp.fields.createCardToken({
+            cardholderName,
+            identificationType: 'CPF',
+            identificationNumber: cpfRaw,
+          });
+          token = tokenResp && tokenResp.id;
+          if (!token) throw new Error('token_missing');
+        } catch (err) {
+          state.cardSubmitting = false;
+          setBumpSelectionLocked(false);
+          $('btn-pay-card').disabled = false;
+          const detail = (err && err.message) || (err && err[0] && err[0].message) || 'Verifique os dados do cartão.';
+          reportPaymentError('card_token', 'token_create_failed', detail);
+          showError(detail, 'Não foi possível processar o cartão');
+          return;
+        }
+
+        try {
+          const resp = await fetch('/api/mp/create-card', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              offer_code: offer.code,
+              order_bump_ids: selectedBumpIds(),
+              expected_total_cents: currentTotalCents(),
+              name: personal.name,
+              email: personal.email,
+              phone: personal.phone,
+              lead_id: state.leadId,
+              token,
+              installments,
+              payment_method_id: state.paymentMethodId,
+              issuer_id: state.issuerId,
+              identification_type: 'CPF',
+              identification_number: cpfRaw,
+              cardholder_name: cardholderName,
+              utm_source: UTMS.utm_source,
+              utm_medium: UTMS.utm_medium,
+              utm_campaign: UTMS.utm_campaign,
+              utm_term: UTMS.utm_term,
+              utm_content: UTMS.utm_content,
+              utm_page: UTMS.utm_page,
+            meta_campaign_id: META.meta_campaign_id,
+            meta_adset_id: META.meta_adset_id,
+            meta_ad_id: META.meta_ad_id,
+            fbclid: META.fbclid,
+              funnel: FUNNEL,
+            }),
+          });
+          const data = await resp.json();
+          state.cardSubmitting = false;
+          $('btn-pay-card').disabled = false;
+
+          if (data && data.already_paid) {
+            // Já comprou este produto: vai direto pra página de obrigado, sem cobrar de novo.
+            // O servidor não devolve IDs nesse caso (chamada não autenticada).
+            try { sessionStorage.removeItem('leadId'); } catch (_) {}
+            window.location.href = thanksUrl('');
+            return;
+          }
+          if (!resp.ok || !data.ok) {
+            setBumpSelectionLocked(false);
+            const msg = data && data.error ? friendlyCardError(data.error, data.detail) : 'Falha ao processar o cartão. Tente novamente.';
+            showError(msg, 'Pagamento não aprovado');
+            return;
+          }
+
+          if (data.lead_id) {
+            state.leadId = data.lead_id;
+            try { sessionStorage.setItem('leadId', String(data.lead_id)); } catch (_) {}
+            fireLeadPixel(data.meta_lead_event_id);
+          }
+          state.paymentId = data.payment_id;
+
+          if (data.status === 'approved') {
+            try { sessionStorage.removeItem('leadId'); } catch (_) {}
+            firePurchasePixel(data);
+            hideOverlay();
+            renderCardApproved();
+            setTimeout(() => {
+              window.location.href = thanksUrl(data.payment_id);
+            }, 800);
+          } else if (data.status === 'in_process' || data.status === 'pending') {
+            hideOverlay();
+            renderCardPending();
+            startPolling(data.payment_id, 'card');
+          } else {
+            setBumpSelectionLocked(false);
+            const msg = data.status_detail ? friendlyCardError(data.status_detail) : 'Pagamento recusado pelo banco emissor.';
+            showError(msg, 'Pagamento não aprovado');
+          }
+        } catch (err) {
+          state.cardSubmitting = false;
+          setBumpSelectionLocked(false);
+          $('btn-pay-card').disabled = false;
+          reportPaymentError('network', 'card_network', String(err && err.message || err));
+          showError('Erro de conexão. Verifique sua internet e tente novamente.', 'Não foi possível processar o cartão');
+        }
+      });
+
+      function friendlyCardError(code, detail) {
+        const map = {
+          cc_rejected_insufficient_amount: 'Saldo insuficiente no cartão.',
+          cc_rejected_bad_filled_card_number: 'Número do cartão inválido.',
+          cc_rejected_bad_filled_date: 'Data de validade inválida.',
+          cc_rejected_bad_filled_security_code: 'CVV inválido.',
+          cc_rejected_bad_filled_other: 'Verifique os dados do cartão.',
+          cc_rejected_high_risk: 'Pagamento recusado por análise de risco. Tente outro cartão.',
+          cc_rejected_call_for_authorize: 'Você precisa autorizar o pagamento com seu banco emissor.',
+          cc_rejected_card_disabled: 'Cartão desabilitado. Ligue para o emissor.',
+          cc_rejected_duplicated_payment: 'Pagamento duplicado. Já existe um pagamento em análise.',
+          cc_rejected_max_attempts: 'Você atingiu o limite de tentativas. Tente outro cartão.',
+        };
+        return map[code] || (detail ? `Erro: ${code} (${detail})` : `Erro: ${code}`);
+      }
+
+      function renderCardPending() {
+        const area = $('card-area');
+        area.innerHTML = `
+          <div class="qr-wrap">
+            <p style="margin:0 0 6px;font-weight:600;">Pagamento em análise</p>
+            <p style="margin:0 0 6px;color:#6b7280;font-size:.92rem;">Estamos aguardando a confirmação do banco emissor. Não feche esta página.</p>
+            <div class="pix-status" id="pix-status">
+              <span class="dot"></span>
+              <span>Aguardando aprovação...</span>
+            </div>
+          </div>`;
+      }
+      function renderCardApproved() {
+        const area = $('card-area');
+        area.innerHTML = `
+          <div class="qr-wrap">
+            <p style="margin:0 0 6px;font-weight:700;color:#047857;">✓ Pagamento aprovado!</p>
+            <p style="margin:0 0 6px;color:#6b7280;font-size:.92rem;">Redirecionando...</p>
+          </div>`;
+      }
+
+      function firePurchasePixel(data) {
+        try {
+          if (window.fbq) {
+            const eventId = data.meta_event_id || ('purchase-' + data.payment_id);
+            window.fbq('track', 'Purchase', {
+              value: (data.amount_cents || offer.sale_price_cents) / 100,
+              currency: 'BRL',
+              content_name: offer.name,
+              content_type: 'product',
+              payment_method: state.method === 'card' ? 'credit_card' : 'pix',
+            }, { eventID: eventId });
+          }
+        } catch (_) {}
+      }
+
+      function fireLeadPixel(eventId) {
+        if (state.leadPixelFired) return;
+        state.leadPixelFired = true;
+        try {
+          if (window.fbq) {
+            const opts = eventId ? { eventID: String(eventId) } : undefined;
+            window.fbq('track', 'Lead', {
+              value: offer.sale_price_cents / 100,
+              currency: 'BRL',
+              content_name: offer.name,
+            }, opts);
+          }
+        } catch (_) {}
+      }
+
+      function startPolling(paymentId, method) {
+        if (state.pollTimer) clearInterval(state.pollTimer);
+        if (state.approved) return;
+        let attempts = 0;
+        let inFlight = false;
+
+        const tick = async () => {
+          if (state.approved || inFlight) return;
+          attempts++;
+          if (attempts > 900) { clearInterval(state.pollTimer); return; } // ~30min @ 2s
+          inFlight = true;
+          try {
+            const resp = await fetch('/api/mp/status?payment_id=' + encodeURIComponent(paymentId), { cache: 'no-store' });
+            const data = await resp.json();
+            if (data.ok && data.status === 'approved') {
+              state.approved = true;
+              clearInterval(state.pollTimer);
+              try { sessionStorage.removeItem('leadId'); } catch (_) {}
+              firePurchasePixel({ payment_id: paymentId, amount_cents: data.amount_cents, meta_event_id: data.meta_event_id });
+              const status = document.getElementById('pix-status');
+              if (status) status.innerHTML = '<span style="color:#047857;font-weight:700;">✓ Pagamento aprovado! Redirecionando...</span>';
+              setTimeout(() => {
+                window.location.href = thanksUrl(paymentId);
+              }, 800);
+            } else if (data.ok && (data.status === 'rejected' || data.status === 'cancelled')) {
+              clearInterval(state.pollTimer);
+              showError('Pagamento não foi aprovado. Tente novamente ou use outro método.', 'Pagamento recusado');
+            }
+          } catch (_) { /* keep trying */ }
+          inFlight = false;
+        };
+
+        state.pollTimer = setInterval(tick, 2000);
+        tick();
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && !state.approved) tick();
+        });
+      }
+    }
+  </script>
+</body>
+</html>

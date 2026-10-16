@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Funil de Conversão · __BRAND_NAME__</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%BB%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    .kpi-value { font-variant-numeric: tabular-nums; }
+    .spinner { width: 14px; height: 14px; border: 2px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .business-metric {
+      background: linear-gradient(145deg, rgba(15, 23, 42, .92), rgba(17, 26, 46, .7));
+      border: 1px solid #253451;
+      border-radius: 10px;
+      padding: 11px 12px;
+      min-width: 0;
+    }
+    .business-metric-value { font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
+
+    #funnel {
+      --trap-h: 96px;
+      --num-size: 26px;
+      --num-font: 12px;
+      --label-font: 11px;
+      --value-font: 19px;
+      --meta-font: 11px;
+      --meta-lbl-font: 12px;
+      --meta-col: 190px;
+    }
+    #funnel[data-density="compact"] {
+      --trap-h: 68px;
+      --num-size: 26px;
+      --num-font: 12px;
+      --label-font: 11px;
+      --value-font: 17px;
+      --meta-font: 11px;
+      --meta-lbl-font: 12px;
+    }
+    #funnel[data-density="dense"] {
+      --trap-h: 46px;
+      --num-size: 22px;
+      --num-font: 11px;
+      --label-font: 10px;
+      --value-font: 13px;
+      --meta-font: 10px;
+      --meta-lbl-font: 11px;
+      --meta-col: 170px;
+    }
+
+    .funnel-row { display: grid; grid-template-columns: var(--num-size, 36px) 1fr var(--meta-col, 200px); gap: 12px; align-items: stretch; }
+    .funnel-step-num {
+      align-self: center; justify-self: center;
+      width: var(--num-size, 30px); height: var(--num-size, 30px); border-radius: 999px;
+      display: grid; place-items: center;
+      background: #1e293b; color: #cbd5e1; font-weight: 700; font-size: var(--num-font, 13px);
+      border: 1px solid #334155;
+    }
+    .funnel-trap-wrap { position: relative; height: var(--trap-h, 96px); }
+    .funnel-trap-wrap svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+    .funnel-trap-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      text-align: center;
+      padding: 0 12px;
+    }
+    .funnel-trap-overlay .stack { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; min-width: 0; }
+    #funnel[data-density="dense"] .funnel-trap-overlay .stack { flex-direction: row; gap: 8px; width: auto; }
+    .funnel-trap-overlay .l {
+      color: #fff; font-weight: 600; font-size: var(--label-font, 13px); line-height: 1.15;
+      letter-spacing: .01em;
+      text-shadow: 0 1px 2px rgba(0,0,0,.45);
+      width: 100%;
+      text-align: center;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      hyphens: auto;
+    }
+    #funnel[data-density="dense"] .funnel-trap-overlay .l {
+      display: block;
+      width: auto;
+      max-width: 90%;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .funnel-trap-overlay .v {
+      color: #fff; font-weight: 800; font-size: var(--value-font, 24px); line-height: 1;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 1px 3px rgba(0,0,0,.5);
+    }
+    .funnel-meta {
+      align-self: center; font-size: var(--meta-font, 12px);
+      display: flex; flex-direction: column; gap: 3px;
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+    }
+    .funnel-meta .lbl { font-size: var(--meta-lbl-font, 13px); font-weight: 600; color: #f1f5f9; margin-bottom: 2px; }
+    .funnel-meta .ret { color: #7dd3fc; }
+    .funnel-meta .conv { color: #cbd5e1; }
+    .funnel-meta .drop { color: #fca5a5; }
+    #funnel[data-density="dense"] .funnel-meta { gap: 1px; }
+    #funnel[data-density="dense"] .funnel-meta .lbl { margin-bottom: 0; }
+    #funnel[data-density="dense"] .funnel-meta .conv,
+    #funnel[data-density="dense"] .funnel-meta .drop { display: inline; }
+    #funnel[data-density="dense"] .funnel-meta .secondary { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .funnel-spout { height: 46px; }
+    #funnel[data-density="comfortable"] .funnel-spout { height: 55px; }
+    .funnel-spout svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+    .drip-track { display: flex; justify-content: center; height: 16px; position: relative; overflow: hidden; }
+    #funnel[data-density="comfortable"] .drip-track { height: 19px; }
+    .drip {
+      width: 8px; height: 8px; border-radius: 999px;
+      background: linear-gradient(180deg, #34d399, #10b981);
+      animation: drip 1.6s ease-in infinite;
+      opacity: 0;
+    }
+    @keyframes drip {
+      0% { transform: translateY(-4px); opacity: 0; }
+      30% { opacity: 1; }
+      100% { transform: translateY(28px); opacity: 0; }
+    }
+
+    @media (max-width: 760px) {
+      #funnel { --trap-h: 78px; --value-font: 18px; --label-font: 11px; --num-size: 24px; --num-font: 11px; }
+      #funnel[data-density="compact"] { --trap-h: 58px; --value-font: 15px; --label-font: 10px; }
+      #funnel[data-density="dense"] { --trap-h: 42px; --value-font: 12px; --label-font: 9px; }
+      .funnel-row { grid-template-columns: var(--num-size, 24px) 1fr; }
+      .funnel-meta-cell {
+        grid-column: 2 / 3;
+        padding: 2px 4px 6px 4px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 2px 10px;
+        font-size: 10.5px;
+        line-height: 1.25;
+        align-items: baseline;
+      }
+      .funnel-meta-cell .lbl { display: none; }
+      .funnel-meta-cell .ret,
+      .funnel-meta-cell .conv,
+      .funnel-meta-cell .drop { white-space: nowrap; }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-[1400px] mx-auto px-3 py-1.5">
+      <div class="flex items-center gap-1 flex-wrap">
+        <a href="/painel" class="inline-flex items-center gap-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-medium rounded-md px-2 py-1.5 transition" title="Painel: todas as páginas">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Painel
+        </a>
+        <select id="funnel-select" title="Funil" class="bg-slate-900 border border-slate-700 rounded-md text-xs px-1.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[140px]"></select>
+        <select id="range" title="Período" class="bg-slate-900 border border-slate-700 rounded-md text-xs px-1.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="today">Hoje</option>
+          <option value="1d">1d</option>
+          <option value="7d">7d</option>
+          <option value="30d" selected>30d</option>
+          <option value="90d">90d</option>
+          <option value="all">Últimos 36 meses</option>
+          <option value="custom">Personalizada</option>
+        </select>
+        <label id="custom-start-wrap" class="hidden inline-flex items-center gap-1 text-[11px] text-slate-300 bg-slate-900 border border-slate-700 rounded-md px-1.5 py-1" title="Início">
+          <span class="text-slate-400">de</span>
+          <input id="custom-start" type="datetime-local" class="bg-transparent border-0 text-slate-100 text-[11px] focus:outline-none w-[140px]" />
+        </label>
+        <label id="custom-end-wrap" class="hidden inline-flex items-center gap-1 text-[11px] text-slate-300 bg-slate-900 border border-slate-700 rounded-md px-1.5 py-1" title="Fim">
+          <span class="text-slate-400">até</span>
+          <input id="custom-end" type="datetime-local" class="bg-transparent border-0 text-slate-100 text-[11px] focus:outline-none w-[140px]" />
+        </label>
+        <button id="custom-clear" class="hidden text-[11px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-md px-1.5 py-1.5" title="Limpar período customizado">×</button>
+        <label class="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-slate-900 border border-slate-700 rounded-md px-1.5 py-1.5 cursor-pointer select-none" title="Esconder leads de IPs de teste">
+          <input id="hide-internal" type="checkbox" class="accent-indigo-500" checked>
+          <span>s/ testes</span>
+        </label>
+        <label class="inline-flex items-center gap-1 text-[11px] text-slate-300 bg-slate-900 border border-slate-700 rounded-md px-1.5 py-1.5 cursor-pointer select-none" title="Uma visita por visitante em cada etapa, no período e filtros selecionados. Atualizar a página (F5), inclusive o checkout, não soma outra visita.">
+          <input id="unique-visits" type="checkbox" class="accent-indigo-500">
+          <span>Visitas únicas</span>
+        </label>
+        <span class="w-px h-5 bg-slate-700 mx-0.5"></span>
+        <span id="utm-filters" class="inline-flex items-center gap-1 flex-wrap">
+          <select data-utm="utm_source" title="utm_source" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[110px]"><option value="">source</option></select>
+          <select data-utm="utm_medium" title="utm_medium" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[110px]"><option value="">medium</option></select>
+          <select data-utm="utm_campaign" title="utm_campaign" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[130px]"><option value="">campaign</option></select>
+          <select data-utm="utm_term" title="utm_term" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[110px]"><option value="">term</option></select>
+          <select data-utm="utm_content" title="utm_content" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[110px]"><option value="">content</option></select>
+          <select data-utm="utm_page" title="utm_page" class="bg-slate-900 border border-slate-700 rounded-md text-[11px] px-1 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[110px]"><option value="">page</option></select>
+          <button id="utm-clear" class="text-[11px] bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-md px-1.5 py-1 hidden" title="Limpar filtros UTM">×</button>
+        </span>
+        <span class="ml-auto inline-flex items-center gap-1">
+          <span id="utm-active-count" class="hidden text-[10px] uppercase tracking-wide bg-indigo-600/30 text-indigo-200 border border-indigo-500/40 rounded-full px-2 py-0.5"></span>
+          <span id="status" class="text-[11px] text-slate-400"></span>
+          <button id="refresh" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-md px-2 py-1.5 transition" title="Atualizar">↻</button>
+          <button id="manage-funnels" class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-medium rounded-md px-2 py-1.5 transition border border-slate-700" title="Gerenciar funis">⚙</button>
+          <button id="open-blocked-ips" class="bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-medium rounded-md px-2 py-1.5 transition border border-slate-700" title="Editar IPs/blocos bloqueados (IPs de teste)">🔒</button>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto px-4 py-3">
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-3 items-start">
+    <section class="card p-4 pt-2">
+      <p class="text-[10px] text-slate-400 text-center mb-1" id="funnel-subtitle">Do primeiro clique à compra finalizada</p>
+
+      <div id="funnel" class="space-y-0"></div>
+
+      <div id="payment-errors-box" class="hidden mt-3 rounded-lg border border-red-800/60 bg-red-950/40 px-4 py-2">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-md bg-red-900/70 grid place-items-center text-red-200 text-sm font-bold">!</div>
+            <div>
+              <p class="text-[10px] uppercase tracking-wide text-red-300">Erros no pagamento</p>
+              <p class="text-lg leading-none font-bold text-red-100" id="pe-total">0</p>
+            </div>
+          </div>
+          <div class="text-[11px] text-red-200 flex flex-wrap gap-x-3 gap-y-1" id="pe-breakdown"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-slate-800">
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-wide">Topo do funil</p>
+          <p class="kpi-value text-xl font-bold leading-tight mt-0.5" id="kpi-top">–</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-wide">Base (compras)</p>
+          <p class="kpi-value text-xl font-bold leading-tight mt-0.5 text-emerald-400" id="kpi-bottom">–</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-wide">Taxa global</p>
+          <p class="kpi-value text-xl font-bold leading-tight mt-0.5 text-indigo-400" id="kpi-global">–</p>
+        </div>
+        <div>
+          <p class="text-[10px] text-slate-400 uppercase tracking-wide">Maior queda</p>
+          <p class="kpi-value text-xs font-semibold leading-tight mt-0.5 text-red-400" id="kpi-drop">–</p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card p-4 lg:sticky lg:top-14" aria-label="Indicadores financeiros do funil">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <p class="text-[10px] uppercase tracking-[.16em] text-slate-500">Resultado do funil</p>
+          <h2 class="text-sm font-semibold text-slate-100 mt-0.5">Indicadores financeiros</h2>
+        </div>
+        <span class="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-300 grid place-items-center" aria-hidden="true">↗</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div class="business-metric">
+          <p class="text-[9px] uppercase tracking-wide text-slate-400">Valor investido</p>
+          <p id="metric-invested" class="business-metric-value text-lg font-bold text-amber-300 mt-0.5 whitespace-nowrap">–</p>
+          <p class="text-[9px] text-slate-500 mt-0.5">Meta Ads</p>
+        </div>
+        <div class="business-metric">
+          <p class="text-[9px] uppercase tracking-wide text-slate-400">Valor recebido</p>
+          <p id="metric-received" class="business-metric-value text-lg font-bold text-emerald-300 mt-0.5 whitespace-nowrap">–</p>
+          <p class="text-[9px] text-slate-500 mt-0.5">Com order bumps</p>
+        </div>
+        <div class="business-metric">
+          <p class="text-[9px] uppercase tracking-wide text-slate-400">Custo por venda</p>
+          <p id="metric-cost-per-sale" class="business-metric-value text-lg font-bold text-orange-300 mt-0.5 whitespace-nowrap">–</p>
+          <p class="text-[9px] text-slate-500 mt-0.5">Investimento ÷ vendas</p>
+        </div>
+        <div class="business-metric">
+          <p class="text-[9px] uppercase tracking-wide text-slate-400">Ticket médio</p>
+          <p id="metric-average-ticket" class="business-metric-value text-lg font-bold text-violet-300 mt-0.5 whitespace-nowrap">–</p>
+          <p class="text-[9px] text-slate-500 mt-0.5">Receita ÷ vendas</p>
+        </div>
+        <div class="business-metric col-span-2 flex items-center justify-between gap-3">
+          <div>
+            <p class="text-[9px] uppercase tracking-wide text-slate-400">ROAS</p>
+            <p class="text-[9px] text-slate-500 mt-0.5">Receita ÷ investimento</p>
+          </div>
+          <p id="metric-roas" class="business-metric-value text-2xl font-extrabold text-sky-300 whitespace-nowrap">–</p>
+        </div>
+      </div>
+      <p id="meta-metrics-status" class="hidden text-[10px] text-amber-300/90 mt-2 leading-relaxed"></p>
+      <p class="text-[10px] text-slate-500 mt-2 leading-relaxed">Todos os valores respeitam período, funil, UTMs e IPs de teste.</p>
+    </aside>
+    </div>
+
+    <footer class="text-center text-[10px] text-slate-500 pt-2">
+      Dados em tempo real via Cloudflare D1 · <span id="footer-updated"></span>
+    </footer>
+  </main>
+
+  <div id="admin-backdrop" class="hidden fixed inset-0 bg-black/70 z-50 flex items-start md:items-center justify-center p-4 overflow-auto">
+    <div class="card w-full max-w-3xl p-6 my-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Gerenciar funis</h3>
+        <button id="admin-close" class="text-slate-400 hover:text-slate-200" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="flex justify-end mb-3">
+        <button id="admin-new" class="text-sm bg-indigo-600 hover:bg-indigo-500 rounded-lg px-3 py-2">+ Novo funil</button>
+      </div>
+
+      <div id="admin-list" class="space-y-2 mb-4"></div>
+
+      <div id="admin-form" class="hidden border-t border-slate-800 pt-4 space-y-3">
+        <h4 id="admin-form-title" class="text-sm font-semibold text-slate-200">Novo funil</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label class="text-xs text-slate-300 space-y-1">
+            <span>Slug (único, sem espaços)</span>
+            <input id="admin-slug" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm" placeholder="ex: exemplo" />
+          </label>
+          <label class="text-xs text-slate-300 space-y-1 md:col-span-2">
+            <span>Nome de exibição</span>
+            <input id="admin-name" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm" placeholder="ex: LP Exemplo" />
+          </label>
+        </div>
+        <label class="inline-flex items-center gap-2 text-xs text-slate-300">
+          <input id="admin-is-default" type="checkbox" class="accent-indigo-500" />
+          <span>Funil padrão (será o selecionado ao abrir a página)</span>
+        </label>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs uppercase tracking-wide text-slate-400">Etapas (em ordem)</span>
+            <button id="admin-add-step" type="button" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">+ Adicionar etapa</button>
+          </div>
+          <div id="admin-steps" class="space-y-2"></div>
+          <p class="text-[11px] text-slate-500 mt-2">
+            <strong>source</strong>: <em>page_view</em> conta linhas em <code>page_views.page</code>; <em>lead_status</em> conta em <code>leads.status</code>; <em>order</em> conta compradores únicos em <code>orders.status</code> (fonte canônica de compra).
+            <strong>valor</strong>: o nome exato da página (<code>exemplo</code>, <code>obrigado</code>, <code>checkout</code>), o status do lead (<code>nome</code>, <code>email</code>, <code>telefone</code>, <code>lead</code>) ou o status do pedido (<code>approved</code> para a etapa de compra).
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <span id="admin-msg" class="text-xs text-slate-300 mr-auto"></span>
+          <button id="admin-cancel" type="button" class="text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg px-3 py-2">Cancelar</button>
+          <button id="admin-save" type="button" class="text-sm bg-emerald-600 hover:bg-emerald-500 rounded-lg px-3 py-2">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: editar IPs/blocos bloqueados -->
+  <div id="modal-ips" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-lg w-full p-6" role="dialog" aria-modal="true" aria-labelledby="modal-ips-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-sky-500/15 grid place-items-center text-sky-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 id="modal-ips-title" class="text-lg font-semibold">IPs/blocos bloqueados</h3>
+          <p class="text-sm text-slate-400 mt-1">
+            Esses IPs/redes são ignorados nas estatísticas (filtro de IPs de teste).
+            Aceita IPv4 ou IPv6, IP único ou CIDR (ex.: <code class="text-slate-300">203.0.113.0/24</code>).
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1" id="ips-list"></div>
+
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <input id="ips-input-value" type="text" placeholder="IP ou CIDR (ex.: 1.2.3.4 ou 2001:db8::/32)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <input id="ips-input-label" type="text" placeholder="Descrição (opcional)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <button id="ips-add" type="button"
+          class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Adicionar
+        </button>
+      </div>
+      <p id="modal-ips-error" class="text-sm text-red-400 mt-3 hidden"></p>
+      <p id="modal-ips-info" class="text-xs text-slate-500 mt-2">
+        IPv4: máscaras /8, /16, /24 ou /32. IPv6: múltiplos de /16 até /128.
+      </p>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <button id="modal-ips-cancel"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Cancelar
+        </button>
+        <button id="modal-ips-save"
+          class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition inline-flex items-center gap-2">
+          <span id="modal-ips-save-label">Salvar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/dashboard/api/funnel";
+    const UTMS_API = "/dashboard/api/funnel/utms";
+    const FUNNELS_API = "/dashboard/api/funnels";
+    const HIDE_INTERNAL_KEY = "hide_internal";
+    const UNIQUE_VISITS_KEY = "funnel_unique_visits";
+    const SELECTED_FUNNEL_KEY = "selected_funnel";
+    const UTM_FILTERS_KEY = "utm_filters";
+    const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_page"];
+    const UTM_NONE = "__none__";
+    const UTM_LABELS = {
+      utm_source: "source",
+      utm_medium: "medium",
+      utm_campaign: "campaign",
+      utm_term: "term",
+      utm_content: "content",
+      utm_page: "page",
+    };
+
+    let utmState = {};
+    try {
+      utmState = JSON.parse(localStorage.getItem(UTM_FILTERS_KEY) || "{}") || {};
+    } catch { utmState = {}; }
+    function persistUtmState() {
+      localStorage.setItem(UTM_FILTERS_KEY, JSON.stringify(utmState));
+    }
+
+    (function initHideInternal() {
+      const cb = document.getElementById("hide-internal");
+      const stored = localStorage.getItem(HIDE_INTERNAL_KEY);
+      if (stored !== null) cb.checked = stored === "1";
+      cb.addEventListener("change", () => {
+        localStorage.setItem(HIDE_INTERNAL_KEY, cb.checked ? "1" : "0");
+        syncUrl();
+        loadUtmValues();
+        load();
+      });
+    })();
+    (function initUniqueVisits() {
+      const cb = document.getElementById("unique-visits");
+      try { cb.checked = localStorage.getItem(UNIQUE_VISITS_KEY) === "1"; } catch {}
+      cb.addEventListener("change", () => {
+        try { localStorage.setItem(UNIQUE_VISITS_KEY, cb.checked ? "1" : "0"); } catch {}
+        syncUrl();
+        loadUtmValues();
+        load();
+      });
+    })();
+    const colors = [
+      ["#6366f1", "#818cf8"],
+      ["#8b5cf6", "#a78bfa"],
+      ["#d946ef", "#e879f9"],
+      ["#ec4899", "#f472b6"],
+      ["#f59e0b", "#fbbf24"],
+      ["#10b981", "#34d399"],
+    ];
+
+    const SHORT_LABELS = {
+      meta_impressions: "Impressões (Meta)",
+      views_obrigado: "Obrigado",
+      views_checkout: "Visitas Checkout",
+      downloaded: "Download",
+      filled_name: "Nome",
+      filled_email: "E-mail",
+      filled_phone: "Telefone",
+      purchased: "Compra",
+    };
+
+    const TRAP_VB_W = 800;
+    const TRAP_VB_H = 96;
+    const SPOUT_VB_H = 56;
+    const MIN_W = 110;
+    const SPOUT_FRACTION = 0.55;
+    const SPOUT_END_FRACTION = 0.42;
+
+    function setStatus(msg, loading = false) {
+      const el = document.getElementById("status");
+      el.innerHTML = loading ? `<span class="spinner"></span> ${escapeHtml(msg)}` : escapeHtml(msg);
+    }
+    function fmt(n) { return (n ?? 0).toLocaleString("pt-BR"); }
+    function pct(a, b) { return b > 0 ? ((a / b) * 100).toFixed(1) + "%" : "–"; }
+    function fmtBRL(n) {
+      return Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    async function loadFunnelsList(preferredSlug) {
+      const sel = document.getElementById("funnel-select");
+      try {
+        const r = await fetch(FUNNELS_API, { cache: "no-store", credentials: "include" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        const funnels = data.funnels || [];
+        const stored = localStorage.getItem(SELECTED_FUNNEL_KEY);
+        sel.innerHTML = funnels.length
+          ? funnels.map((f) => `<option value="${escapeAttr(f.slug)}">${escapeHtml(f.name)}${f.is_default ? " (padrão)" : ""}</option>`).join("")
+          : `<option value="">Sem funis</option>`;
+        const candidates = [preferredSlug, stored];
+        const fromCandidates = candidates.find((s) => s && funnels.some((f) => f.slug === s));
+        const validSlug = fromCandidates || funnels.find((f) => f.is_default)?.slug || funnels[0]?.slug || "";
+        if (validSlug) sel.value = validSlug;
+        return funnels;
+      } catch (e) {
+        sel.innerHTML = `<option value="">Erro ao carregar</option>`;
+        return [];
+      }
+    }
+
+    // Converte "YYYY-MM-DDTHH:mm" (datetime-local, hora local) em ISO UTC pra mandar pro backend.
+    function localToIso(localStr) {
+      if (!localStr) return null;
+      const d = new Date(localStr);
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    }
+
+    // Inverso de localToIso: ISO UTC vira "YYYY-MM-DDTHH:mm" na timezone local pra colar num <input type="datetime-local">.
+    function isoToLocal(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    // Reflete o estado completo dos filtros na URL sem recarregar a página.
+    // Apenas valores não-default vão pra URL pra manter ela curta.
+    function syncUrl() {
+      const range = document.getElementById("range").value;
+      const funnel = document.getElementById("funnel-select").value;
+      const hide = document.getElementById("hide-internal").checked;
+      const startLocal = document.getElementById("custom-start").value;
+      const endLocal = document.getElementById("custom-end").value;
+      const params = new URLSearchParams();
+      if (range && range !== "30d") params.set("range", range);
+      if (funnel) params.set("funnel", funnel);
+      if (startLocal) params.set("start", localToIso(startLocal));
+      if (endLocal) params.set("end", localToIso(endLocal));
+      if (!hide) params.set("include_internal", "1");
+      params.set("unique_visits", document.getElementById("unique-visits").checked ? "1" : "0");
+      for (const k of UTM_KEYS) {
+        const v = utmState[k];
+        if (v) params.set(k, v);
+      }
+      const qs = params.toString();
+      const newUrl = window.location.pathname + (qs ? `?${qs}` : "");
+      history.replaceState(null, "", newUrl);
+    }
+
+    // Lê filtros da URL e aplica no DOM/estado antes do bootstrap.
+    // Retorna o slug do funil vindo da URL (ou null) pra loadFunnelsList honrar.
+    function applyUrlState() {
+      const params = new URLSearchParams(window.location.search);
+      const range = params.get("range");
+      if (range) document.getElementById("range").value = range;
+      const start = params.get("start");
+      if (start) document.getElementById("custom-start").value = isoToLocal(start);
+      const end = params.get("end");
+      if (end) document.getElementById("custom-end").value = isoToLocal(end);
+      if ((start || end) && document.getElementById("range").value !== "custom") {
+        document.getElementById("range").value = "custom";
+      }
+      if (params.get("include_internal") === "1") {
+        document.getElementById("hide-internal").checked = false;
+      }
+      if (params.has("unique_visits")) {
+        document.getElementById("unique-visits").checked = params.get("unique_visits") === "1";
+      }
+      let hasUtmParam = false;
+      for (const k of UTM_KEYS) {
+        if (params.has(k)) {
+          hasUtmParam = true;
+          const v = params.get(k);
+          if (v) utmState[k] = v; else delete utmState[k];
+        }
+      }
+      if (hasUtmParam) persistUtmState();
+      refreshCustomDatesVisibility();
+      refreshUtmBadge();
+      return params.get("funnel");
+    }
+
+    function refreshCustomDatesVisibility() {
+      const isCustom = document.getElementById("range").value === "custom";
+      document.getElementById("custom-start-wrap").classList.toggle("hidden", !isCustom);
+      document.getElementById("custom-end-wrap").classList.toggle("hidden", !isCustom);
+      const btn = document.getElementById("custom-clear");
+      const s = document.getElementById("custom-start").value;
+      const e = document.getElementById("custom-end").value;
+      btn.classList.toggle("hidden", !isCustom || !(s || e));
+    }
+
+    function buildBaseParams() {
+      const range = document.getElementById("range").value;
+      const funnel = document.getElementById("funnel-select").value;
+      const hide = document.getElementById("hide-internal").checked;
+      const startIso = localToIso(document.getElementById("custom-start").value);
+      const endIso = localToIso(document.getElementById("custom-end").value);
+      const params = [`range=${encodeURIComponent(range)}`];
+      if (startIso) params.push(`start=${encodeURIComponent(startIso)}`);
+      if (endIso) params.push(`end=${encodeURIComponent(endIso)}`);
+      if (funnel) params.push(`funnel=${encodeURIComponent(funnel)}`);
+      if (!hide) params.push("include_internal=1");
+      params.push("unique_visits=" + (document.getElementById("unique-visits").checked ? "1" : "0"));
+      for (const k of UTM_KEYS) {
+        const v = utmState[k];
+        if (v) params.push(`${k}=${encodeURIComponent(v)}`);
+      }
+      return params;
+    }
+
+    function activeUtmCount() {
+      return UTM_KEYS.reduce((acc, k) => acc + (utmState[k] ? 1 : 0), 0);
+    }
+
+    function refreshUtmBadge() {
+      const n = activeUtmCount();
+      const badge = document.getElementById("utm-active-count");
+      const clear = document.getElementById("utm-clear");
+      if (n > 0) {
+        badge.textContent = `${n} ativo${n > 1 ? "s" : ""}`;
+        badge.classList.remove("hidden");
+        clear.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+        clear.classList.add("hidden");
+      }
+    }
+
+    let utmLoadSequence = 0;
+    async function loadUtmValues() {
+      const sequence = ++utmLoadSequence;
+      const range = document.getElementById("range").value;
+      const funnel = document.getElementById("funnel-select").value;
+      const hide = document.getElementById("hide-internal").checked;
+      const startIso = localToIso(document.getElementById("custom-start").value);
+      const endIso = localToIso(document.getElementById("custom-end").value);
+      const params = [`range=${encodeURIComponent(range)}`];
+      if (startIso) params.push(`start=${encodeURIComponent(startIso)}`);
+      if (endIso) params.push(`end=${encodeURIComponent(endIso)}`);
+      if (funnel) params.push(`funnel=${encodeURIComponent(funnel)}`);
+      if (!hide) params.push("include_internal=1");
+      params.push("unique_visits=" + (document.getElementById("unique-visits").checked ? "1" : "0"));
+      try {
+        const r = await fetch(`${UTMS_API}?${params.join("&")}`, { cache: "no-store", credentials: "include" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        if (sequence !== utmLoadSequence) return;
+        const values = data.values || {};
+        for (const k of UTM_KEYS) {
+          const sel = document.querySelector(`select[data-utm="${k}"]`);
+          if (!sel) continue;
+          const list = values[k] || [];
+          const current = utmState[k] || "";
+          const placeholder = UTM_LABELS[k] || k;
+          const opts = [`<option value="">${escapeHtml(placeholder)}</option>`, `<option value="${UTM_NONE}">(sem UTM)</option>`];
+          for (const item of list) {
+            opts.push(`<option value="${escapeAttr(item.value)}">${escapeHtml(item.value)} (${fmt(item.count)})</option>`);
+          }
+          if (current && current !== UTM_NONE && !list.some((it) => it.value === current)) {
+            opts.push(`<option value="${escapeAttr(current)}">${escapeHtml(current)} (–)</option>`);
+          }
+          sel.innerHTML = opts.join("");
+          sel.value = current;
+        }
+        refreshUtmBadge();
+      } catch (e) {
+        // Silencioso, dropdowns ficam com "Todos" apenas
+      }
+    }
+
+    let loadSequence = 0;
+    async function load() {
+      const sequence = ++loadSequence;
+      setStatus("Carregando...", true);
+      try {
+        const params = buildBaseParams();
+        const r = await fetch(`${API}?${params.join("&")}`, { cache: "no-store", credentials: "include" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        if (sequence !== loadSequence) return;
+        if (data.error) throw new Error(data.error);
+        render(data);
+        setStatus("");
+        document.getElementById("footer-updated").textContent = "atualizado em " + new Date().toLocaleString("pt-BR");
+      } catch (e) {
+        if (sequence !== loadSequence) return;
+        setStatus("Erro: " + e.message);
+      }
+    }
+
+    function trapezoidSVG(topW, bottomW, gradId, c1, c2) {
+      const cx = TRAP_VB_W / 2;
+      const tl = `${cx - topW / 2},0`;
+      const tr = `${cx + topW / 2},0`;
+      const br = `${cx + bottomW / 2},${TRAP_VB_H}`;
+      const bl = `${cx - bottomW / 2},${TRAP_VB_H}`;
+      return `
+        <svg viewBox="0 0 ${TRAP_VB_W} ${TRAP_VB_H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="${gradId}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${c1}"/>
+              <stop offset="100%" stop-color="${c2}"/>
+            </linearGradient>
+          </defs>
+          <polygon points="${tl} ${tr} ${br} ${bl}" fill="url(#${gradId})"/>
+        </svg>
+      `;
+    }
+
+    function spoutSVG(topW, c1, c2) {
+      const vbW = TRAP_VB_W;
+      const vbH = SPOUT_VB_H;
+      const cx = vbW / 2;
+      const bottomW = Math.max(40, topW * SPOUT_END_FRACTION);
+      const neckY = vbH * 0.55;
+      const tl = `${cx - topW / 2},0`;
+      const tr = `${cx + topW / 2},0`;
+      const br = `${cx + bottomW / 2},${neckY}`;
+      const bl = `${cx - bottomW / 2},${neckY}`;
+      const tubeBL = `${cx - bottomW / 2},${vbH}`;
+      const tubeBR = `${cx + bottomW / 2},${vbH}`;
+      return `
+        <svg viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad-spout" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="${c1}"/>
+              <stop offset="100%" stop-color="${c2}"/>
+            </linearGradient>
+          </defs>
+          <polygon points="${tl} ${tr} ${br} ${bl}" fill="url(#grad-spout)"/>
+          <polygon points="${bl} ${br} ${tubeBR} ${tubeBL}" fill="url(#grad-spout)"/>
+        </svg>
+      `;
+    }
+
+    function render(data) {
+      const metrics = data.business_metrics || {};
+      const metaAvailable = metrics.meta_available === true;
+      const impressions = metaAvailable ? Number(metrics.impressions) || 0 : null;
+      const steps = [
+        { key: "meta_impressions", label: "Impressões (Meta)", value: impressions, unavailable: !metaAvailable },
+        ...(data.steps || []),
+      ];
+      const container = document.getElementById("funnel");
+      container.innerHTML = "";
+
+      const topKnown = steps[0]?.value !== null && steps[0]?.value !== undefined;
+      const top = topKnown ? Number(steps[0].value) || 0 : 0;
+      const denom = Math.max(top, 1);
+
+      // Densidade adaptativa: o funil curto ganha mais presença vertical;
+      // funis com 5+ etapas continuam compactos para caber na primeira dobra.
+      const n = steps.length;
+      container.dataset.density = n >= 13 ? "dense" : n >= 5 ? "compact" : "comfortable";
+
+      // Largura híbrida: 70% pela posição (garante narrowing visual progressivo, mesmo quando
+      // valores caem brutalmente ou viram zero) + 30% pelo sqrt(ratio) (mantém leve indício
+      // de proporção quando os valores variam). Sempre força monotonia decrescente.
+      const RANK_WEIGHT = 0.7;
+      const VAL_WEIGHT = 1 - RANK_WEIGHT;
+      const widths = steps.map((s, i) => {
+        const t = n > 1 ? i / (n - 1) : 0;
+        const rankW = TRAP_VB_W - t * (TRAP_VB_W - MIN_W);
+        const ratio = Math.max(0, (s.value || 0) / denom);
+        const valW = Math.sqrt(ratio) * TRAP_VB_W;
+        return RANK_WEIGHT * rankW + VAL_WEIGHT * valW;
+      });
+      for (let i = 1; i < widths.length; i++) {
+        if (widths[i] > widths[i - 1]) widths[i] = widths[i - 1];
+      }
+      for (let i = 0; i < widths.length; i++) {
+        widths[i] = Math.min(TRAP_VB_W, Math.max(MIN_W, widths[i]));
+      }
+
+      let prev = null;
+      let biggestDrop = { from: null, to: null, pct: 0 };
+      const dense = n >= 13;
+
+      steps.forEach((s, i) => {
+        const valueKnown = s.value !== null && s.value !== undefined;
+        const value = valueKnown ? Number(s.value) || 0 : 0;
+        const isLast = i === steps.length - 1;
+        const topW = widths[i];
+        const bottomW = isLast
+          ? Math.max(MIN_W * SPOUT_FRACTION, topW * SPOUT_FRACTION)
+          : Math.min(topW, widths[i + 1]);
+
+        const [c1, c2] = colors[i % colors.length];
+        const retention = valueKnown && top > 0 ? (value / top) * 100 : 0;
+        const conversion = valueKnown && prev !== null && prev > 0 ? (value / prev) * 100 : 100;
+        const drop = valueKnown && prev !== null && prev > 0 ? ((prev - value) / prev) * 100 : 0;
+        if (prev !== null && drop > biggestDrop.pct) {
+          biggestDrop = { from: steps[i - 1].label, to: s.label, pct: drop };
+        }
+
+        const retText = !valueKnown
+          ? "Meta indisponível"
+          : top > 0
+            ? (dense ? `${retention.toFixed(0)}% topo` : `${retention.toFixed(1)}% do topo`)
+            : "–";
+        const convText = !valueKnown
+          ? "dados indisponíveis"
+          : i === 0
+            ? (dense ? "topo" : "topo do funil")
+            : prev !== null
+              ? (dense ? `${conversion.toFixed(0)}% ant.` : `${conversion.toFixed(1)}% da etapa anterior`)
+              : "–";
+        const dropText = drop > 0
+          ? (dense ? `↓ ${drop.toFixed(0)}%` : `↓ ${drop.toFixed(1)}% queda`)
+          : "";
+
+        const row = document.createElement("div");
+        row.className = "funnel-row";
+        row.innerHTML = `
+          <div class="funnel-step-num">${i + 1}</div>
+          <div class="funnel-trap-wrap">
+            ${trapezoidSVG(topW, bottomW, `grad-${i}`, c1, c2)}
+            <div class="funnel-trap-overlay">
+              <div class="stack">
+                <div class="l">${escapeHtml(SHORT_LABELS[s.key] || s.label)}</div>
+                <div class="v">${valueKnown ? fmt(value) : "–"}</div>
+              </div>
+            </div>
+          </div>
+          <div class="funnel-meta funnel-meta-cell">
+            <span class="lbl">${escapeHtml(s.label)}</span>
+            <span class="ret">${retText}</span>
+            <span class="conv">${convText}</span>
+            ${dropText ? `<span class="drop">${dropText}</span>` : ""}
+          </div>
+        `;
+        container.appendChild(row);
+        prev = valueKnown ? value : null;
+      });
+
+      if (steps.length > 0) {
+        const lastTopW = widths[widths.length - 1] * SPOUT_FRACTION;
+        const [, c2] = colors[(steps.length - 1) % colors.length];
+        const spoutRow = document.createElement("div");
+        spoutRow.className = "funnel-row";
+        spoutRow.innerHTML = `
+          <div></div>
+          <div class="funnel-spout">${spoutSVG(lastTopW, c2, "#0f3a2e")}</div>
+          <div class="funnel-meta funnel-meta-cell" style="justify-content:center;">
+            <span class="lbl text-emerald-300">Saída do funil</span>
+            <span class="conv">${fmt(steps[steps.length - 1]?.value || 0)} compras</span>
+          </div>
+        `;
+        container.appendChild(spoutRow);
+
+        const dripRow = document.createElement("div");
+        dripRow.className = "funnel-row";
+        dripRow.innerHTML = `
+          <div></div>
+          <div class="drip-track">
+            <div class="drip" style="position:absolute; left:50%; top:0; transform:translateX(-50%);"></div>
+          </div>
+          <div></div>
+        `;
+        container.appendChild(dripRow);
+      }
+
+      const pe = data.payment_errors || { total: 0, by_stage: {} };
+      const peBox = document.getElementById("payment-errors-box");
+      const peTotal = document.getElementById("pe-total");
+      const peBreakdown = document.getElementById("pe-breakdown");
+      peTotal.textContent = fmt(pe.total || 0);
+      const stageLabels = {
+        pix_create: "PIX",
+        card_create: "Cartão (criação)",
+        card_rejected: "Cartão (recusado)",
+        card_token: "Cartão (token)",
+        network: "Rede",
+      };
+      const parts = [];
+      const byStage = pe.by_stage || {};
+      for (const [k, label] of Object.entries(stageLabels)) {
+        const n = Number(byStage[k]) || 0;
+        if (n > 0) parts.push(`<span><span class="text-red-300">${label}:</span> <strong class="text-red-100">${fmt(n)}</strong></span>`);
+      }
+      peBreakdown.innerHTML = parts.join("");
+      peBox.classList.toggle("hidden", !(pe.total > 0));
+
+      const bottom = steps[steps.length - 1]?.value || 0;
+      document.getElementById("kpi-top").textContent = topKnown ? fmt(top) : "–";
+      document.getElementById("kpi-bottom").textContent = fmt(bottom);
+      document.getElementById("kpi-global").textContent = pct(bottom, top);
+      document.getElementById("kpi-drop").textContent = biggestDrop.pct > 0
+        ? `${biggestDrop.from} → ${biggestDrop.to} (${biggestDrop.pct.toFixed(1)}%)`
+        : "–";
+
+      document.getElementById("metric-invested").textContent = metaAvailable ? fmtBRL(metrics.invested) : "–";
+      document.getElementById("metric-received").textContent = fmtBRL((Number(metrics.received_cents) || 0) / 100);
+      document.getElementById("metric-cost-per-sale").textContent = metrics.cost_per_sale == null ? "–" : fmtBRL(metrics.cost_per_sale);
+      document.getElementById("metric-average-ticket").textContent = metrics.average_ticket == null ? "–" : fmtBRL(metrics.average_ticket);
+      document.getElementById("metric-roas").textContent = metrics.roas != null && Number.isFinite(Number(metrics.roas))
+        ? Number(metrics.roas).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "x"
+        : "–";
+      const metaStatus = document.getElementById("meta-metrics-status");
+      metaStatus.textContent = !metaAvailable
+        ? "Não foi possível consultar a Meta agora. Receita mantida com os dados do D1."
+        : metrics.meta_partial
+          ? "Uma das contas Meta não respondeu; investimento e impressões podem estar parciais."
+          : "";
+      metaStatus.classList.toggle("hidden", !metaStatus.textContent);
+
+      const funnelName = data.funnel?.name ? data.funnel.name + " · " : "";
+      const startLocal = document.getElementById("custom-start").value;
+      const endLocal = document.getElementById("custom-end").value;
+      const fmtLocal = (v) => v ? new Date(v).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
+      let periodo;
+      if (startLocal || endLocal) {
+        periodo = `${startLocal ? "De " + fmtLocal(startLocal) : "Até início"} → ${endLocal ? fmtLocal(endLocal) : "agora"}`;
+      } else {
+        if (data.range === "all" || data.range === "36m") periodo = "Últimos 36 meses";
+        else if (data.range === "today") periodo = "Hoje";
+        else if (data.range === "1d") periodo = "Último dia";
+        else periodo = `Últimos ${data.range.replace("d", " dias")}`;
+      }
+      const visitMode = data.unique_visits ? "Visitas únicas" : "Todas as visitas";
+      document.getElementById("funnel-subtitle").textContent = funnelName + periodo + " · " + visitMode;
+    }
+
+    document.getElementById("refresh").addEventListener("click", () => {
+      syncUrl();
+      loadUtmValues();
+      load();
+    });
+    document.getElementById("range").addEventListener("change", () => {
+      const sel = document.getElementById("range");
+      if (sel.value !== "custom") {
+        document.getElementById("custom-start").value = "";
+        document.getElementById("custom-end").value = "";
+      }
+      refreshCustomDatesVisibility();
+      syncUrl();
+      loadUtmValues();
+      load();
+    });
+    ["custom-start", "custom-end"].forEach((id) => {
+      document.getElementById(id).addEventListener("change", () => {
+        refreshCustomDatesVisibility();
+        syncUrl();
+        loadUtmValues();
+        load();
+      });
+    });
+    document.getElementById("custom-clear").addEventListener("click", () => {
+      document.getElementById("custom-start").value = "";
+      document.getElementById("custom-end").value = "";
+      refreshCustomDatesVisibility();
+      syncUrl();
+      loadUtmValues();
+      load();
+    });
+    document.getElementById("funnel-select").addEventListener("change", () => {
+      localStorage.setItem(SELECTED_FUNNEL_KEY, document.getElementById("funnel-select").value);
+      syncUrl();
+      loadUtmValues();
+      load();
+    });
+    document.getElementById("manage-funnels").addEventListener("click", openAdminModal);
+
+    document.querySelectorAll('select[data-utm]').forEach((sel) => {
+      sel.addEventListener("change", () => {
+        const key = sel.dataset.utm;
+        const v = sel.value;
+        if (v) utmState[key] = v; else delete utmState[key];
+        persistUtmState();
+        refreshUtmBadge();
+        syncUrl();
+        load();
+      });
+    });
+
+    document.getElementById("utm-clear").addEventListener("click", () => {
+      utmState = {};
+      persistUtmState();
+      document.querySelectorAll('select[data-utm]').forEach((sel) => { sel.value = ""; });
+      refreshUtmBadge();
+      syncUrl();
+      load();
+    });
+
+    (async function bootstrap() {
+      const urlFunnel = applyUrlState();
+      await loadFunnelsList(urlFunnel);
+      syncUrl();
+      await loadUtmValues();
+      load();
+      setInterval(load, 60_000);
+    })();
+
+    // ============== Admin de funis ==============
+
+    const adminEl = {
+      backdrop: document.getElementById("admin-backdrop"),
+      list: document.getElementById("admin-list"),
+      form: document.getElementById("admin-form"),
+      formTitle: document.getElementById("admin-form-title"),
+      slug: document.getElementById("admin-slug"),
+      name: document.getElementById("admin-name"),
+      isDefault: document.getElementById("admin-is-default"),
+      stepsContainer: document.getElementById("admin-steps"),
+      addStep: document.getElementById("admin-add-step"),
+      save: document.getElementById("admin-save"),
+      cancel: document.getElementById("admin-cancel"),
+      newBtn: document.getElementById("admin-new"),
+      close: document.getElementById("admin-close"),
+      msg: document.getElementById("admin-msg"),
+    };
+    let adminEditingId = null;
+    let adminCachedFunnels = [];
+
+    async function openAdminModal() {
+      adminEl.backdrop.classList.remove("hidden");
+      adminEl.form.classList.add("hidden");
+      await refreshAdminList();
+    }
+    function closeAdminModal() {
+      adminEl.backdrop.classList.add("hidden");
+      adminEl.msg.textContent = "";
+    }
+    adminEl.close.addEventListener("click", closeAdminModal);
+    adminEl.backdrop.addEventListener("click", (e) => {
+      if (e.target === adminEl.backdrop) closeAdminModal();
+    });
+
+    async function refreshAdminList() {
+      adminEl.list.innerHTML = `<div class="text-slate-400 text-sm">Carregando...</div>`;
+      try {
+        const r = await fetch(FUNNELS_API, { cache: "no-store", credentials: "include" });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        adminCachedFunnels = data.funnels || [];
+        if (!adminCachedFunnels.length) {
+          adminEl.list.innerHTML = `<div class="text-slate-400 text-sm">Nenhum funil cadastrado.</div>`;
+          return;
+        }
+        adminEl.list.innerHTML = adminCachedFunnels.map((f) => `
+          <div class="flex items-center justify-between gap-3 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-100 truncate">
+                ${escapeHtml(f.name)}
+                ${f.is_default ? '<span class="ml-2 text-[10px] uppercase tracking-wide text-emerald-400">padrão</span>' : ""}
+              </div>
+              <div class="text-xs text-slate-400">slug: ${escapeHtml(f.slug)} · ${Number(f.steps.length) || 0} etapa(s)</div>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button data-action="edit" data-id="${escapeAttr(f.id)}" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded px-2 py-1">Editar</button>
+              <button data-action="delete" data-id="${escapeAttr(f.id)}" class="text-xs bg-red-900/40 hover:bg-red-900/70 border border-red-800 text-red-200 rounded px-2 py-1">Excluir</button>
+            </div>
+          </div>
+        `).join("");
+        adminEl.list.querySelectorAll("button[data-action]").forEach((btn) => {
+          btn.addEventListener("click", () => handleAdminRowAction(btn.dataset.action, parseInt(btn.dataset.id, 10)));
+        });
+      } catch (e) {
+        adminEl.list.innerHTML = `<div class="text-red-300 text-sm">Erro: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    function handleAdminRowAction(action, id) {
+      const f = adminCachedFunnels.find((x) => x.id === id);
+      if (!f) return;
+      if (action === "edit") openAdminForm(f);
+      else if (action === "delete") deleteFunnel(id);
+    }
+
+    async function deleteFunnel(id) {
+      if (!confirm("Excluir esse funil? Esta ação é irreversível.")) return;
+      try {
+        const r = await fetch(`${FUNNELS_API}/${id}`, { method: "DELETE", credentials: "include" });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        await refreshAdminList();
+        await loadFunnelsList();
+        load();
+      } catch (e) {
+        alert("Erro ao excluir: " + e.message);
+      }
+    }
+
+    adminEl.newBtn.addEventListener("click", () => openAdminForm(null));
+    adminEl.cancel.addEventListener("click", () => adminEl.form.classList.add("hidden"));
+    adminEl.addStep.addEventListener("click", () => addStepRow());
+
+    function openAdminForm(funnel) {
+      adminEditingId = funnel?.id || null;
+      adminEl.formTitle.textContent = funnel ? "Editar funil" : "Novo funil";
+      adminEl.slug.value = funnel?.slug || "";
+      adminEl.slug.disabled = !!funnel; // não permitir mudar slug pra preservar histórico
+      adminEl.name.value = funnel?.name || "";
+      adminEl.isDefault.checked = !!funnel?.is_default;
+      adminEl.stepsContainer.innerHTML = "";
+      const steps = funnel?.steps?.length ? funnel.steps : [{ key: "", label: "", source: "page_view", match_value: "" }];
+      steps.forEach(addStepRow);
+      adminEl.msg.textContent = "";
+      adminEl.form.classList.remove("hidden");
+    }
+
+    function addStepRow(step = { key: "", label: "", source: "page_view", match_value: "" }) {
+      const row = document.createElement("div");
+      row.className = "grid grid-cols-12 gap-2 items-center";
+      row.innerHTML = `
+        <input data-f="key" placeholder="chave (ex: views_exemplo)" value="${escapeAttr(step.key)}"
+          class="col-span-3 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs" />
+        <input data-f="label" placeholder="rótulo" value="${escapeAttr(step.label)}"
+          class="col-span-4 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs" />
+        <select data-f="source" class="col-span-2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs">
+          <option value="page_view"   ${step.source === "page_view" ? "selected" : ""}>page_view</option>
+          <option value="lead_status" ${step.source === "lead_status" ? "selected" : ""}>lead_status</option>
+          <option value="order"       ${step.source === "order" ? "selected" : ""}>order</option>
+        </select>
+        <input data-f="match_value" placeholder="valor (ex: exemplo, comprou)" value="${escapeAttr(step.match_value)}"
+          class="col-span-2 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs" />
+        <button type="button" data-action="remove" class="col-span-1 text-xs text-red-300 hover:text-red-100">×</button>
+      `;
+      row.querySelector('button[data-action="remove"]').addEventListener("click", () => row.remove());
+      adminEl.stepsContainer.appendChild(row);
+    }
+
+    adminEl.save.addEventListener("click", async () => {
+      const steps = [...adminEl.stepsContainer.children].map((row) => ({
+        key: row.querySelector('[data-f="key"]').value.trim(),
+        label: row.querySelector('[data-f="label"]').value.trim(),
+        source: row.querySelector('[data-f="source"]').value,
+        match_value: row.querySelector('[data-f="match_value"]').value.trim(),
+      }));
+      const payload = {
+        slug: adminEl.slug.value.trim(),
+        name: adminEl.name.value.trim(),
+        is_default: adminEl.isDefault.checked,
+        steps,
+      };
+      adminEl.msg.textContent = "Salvando...";
+      try {
+        const url = adminEditingId ? `${FUNNELS_API}/${adminEditingId}` : FUNNELS_API;
+        const method = adminEditingId ? "PUT" : "POST";
+        const r = await fetch(url, {
+          method,
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+        adminEl.form.classList.add("hidden");
+        adminEl.msg.textContent = "";
+        await refreshAdminList();
+        await loadFunnelsList();
+        load();
+      } catch (e) {
+        adminEl.msg.textContent = "Erro: " + e.message;
+      }
+    });
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s).replace(/\n/g, " "); }
+
+    // ===== Modal: IPs/blocos bloqueados (IPs de teste) =====
+    const SETTINGS_API = "/dashboard/api/settings";
+    const ipsModal = document.getElementById("modal-ips");
+    const ipsList = document.getElementById("ips-list");
+    const ipsInputValue = document.getElementById("ips-input-value");
+    const ipsInputLabel = document.getElementById("ips-input-label");
+    const ipsAddBtn = document.getElementById("ips-add");
+    const ipsCancelBtn = document.getElementById("modal-ips-cancel");
+    const ipsSaveBtn = document.getElementById("modal-ips-save");
+    const ipsSaveLabel = document.getElementById("modal-ips-save-label");
+    const ipsErrorEl = document.getElementById("modal-ips-error");
+
+    let ipsDraft = [];
+
+    function ipsShowError(msg) {
+      ipsErrorEl.textContent = msg;
+      ipsErrorEl.classList.toggle("hidden", !msg);
+    }
+
+    function renderIpsList() {
+      if (!ipsDraft.length) {
+        ipsList.innerHTML = '<p class="text-sm text-slate-500 italic px-2 py-3">Nenhum IP/bloco cadastrado.</p>';
+        return;
+      }
+      ipsList.innerHTML = ipsDraft.map((e, i) => `
+        <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+          <div class="flex-1 min-w-0">
+            <div class="font-mono text-sm text-sky-300 truncate">${escapeHtml(e.value)}</div>
+            ${e.label ? `<div class="text-xs text-slate-400 truncate">${escapeHtml(e.label)}</div>` : ""}
+          </div>
+          <button type="button" data-idx="${i}" class="ip-remove inline-flex items-center justify-center w-8 h-8 rounded-md bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white transition shrink-0" title="Remover">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      `).join("");
+      ipsList.querySelectorAll(".ip-remove").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          ipsDraft.splice(idx, 1);
+          renderIpsList();
+        });
+      });
+    }
+
+    function validateIpEntryClient(input) {
+      const v = (input || "").trim();
+      if (!v) return { ok: false, reason: "Valor vazio" };
+      if (!/^[0-9a-fA-F.:*/]+$/.test(v)) return { ok: false, reason: "Caracteres inválidos" };
+      if (!v.includes("/")) {
+        if (!(v.includes(".") || v.includes(":"))) return { ok: false, reason: "Formato não reconhecido" };
+        return { ok: true, value: v };
+      }
+      const [addr, prefStr] = v.split("/");
+      const prefix = parseInt(prefStr, 10);
+      if (!Number.isFinite(prefix) || prefix < 0) return { ok: false, reason: "CIDR inválido" };
+      if (addr.includes(".") && !addr.includes(":")) {
+        if (![8, 16, 24, 32].includes(prefix)) return { ok: false, reason: "IPv4 aceita /8, /16, /24 ou /32" };
+        if (addr.split(".").length !== 4) return { ok: false, reason: "IPv4 inválido" };
+        return { ok: true, value: v };
+      }
+      if (addr.includes(":")) {
+        if (prefix === 128) return { ok: true, value: v };
+        if (prefix % 16 !== 0 || prefix < 16 || prefix > 112) return { ok: false, reason: "IPv6 aceita múltiplos de /16 até /128" };
+        return { ok: true, value: v };
+      }
+      return { ok: false, reason: "Formato não reconhecido" };
+    }
+
+    function ipsAdd() {
+      ipsShowError("");
+      const v = validateIpEntryClient(ipsInputValue.value);
+      if (!v.ok) { ipsShowError(v.reason); return; }
+      if (ipsDraft.some(e => e.value === v.value)) { ipsShowError("Entrada duplicada"); return; }
+      ipsDraft.push({ value: v.value, label: ipsInputLabel.value.trim().slice(0, 80) });
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      ipsInputValue.focus();
+      renderIpsList();
+    }
+
+    ipsAddBtn.addEventListener("click", ipsAdd);
+    ipsInputValue.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+    ipsInputLabel.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+
+    function openIpsModal(initial) {
+      ipsDraft = (initial || []).map(e => ({ value: e.value, label: e.label || "" }));
+      ipsShowError("");
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      renderIpsList();
+      ipsSaveBtn.disabled = false;
+      ipsCancelBtn.disabled = false;
+      ipsSaveLabel.textContent = "Salvar";
+      ipsModal.classList.remove("hidden");
+      ipsModal.classList.add("flex");
+      setTimeout(() => ipsInputValue.focus(), 50);
+    }
+    function closeIpsModal() {
+      ipsModal.classList.add("hidden");
+      ipsModal.classList.remove("flex");
+    }
+
+    document.getElementById("open-blocked-ips").addEventListener("click", async () => {
+      try {
+        const r = await fetch(SETTINGS_API, { cache: "no-store", credentials: "include" });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        openIpsModal(data.blocked_ips || []);
+      } catch (e) {
+        openIpsModal([]);
+        ipsShowError("Não foi possível carregar a lista atual: " + e.message);
+      }
+    });
+
+    ipsCancelBtn.addEventListener("click", closeIpsModal);
+    ipsModal.addEventListener("click", (e) => { if (e.target === ipsModal) closeIpsModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !ipsModal.classList.contains("hidden")) closeIpsModal();
+    });
+
+    ipsSaveBtn.addEventListener("click", async () => {
+      ipsShowError("");
+      ipsSaveBtn.disabled = true;
+      ipsCancelBtn.disabled = true;
+      ipsSaveLabel.innerHTML = '<span class="spinner"></span> Salvando…';
+      try {
+        const r = await fetch(SETTINGS_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ key: "blocked_ips", value: ipsDraft }),
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        closeIpsModal();
+        setStatus("Lista de IPs atualizada");
+        load();
+      } catch (e) {
+        ipsShowError("Erro: " + e.message);
+        ipsSaveBtn.disabled = false;
+        ipsCancelBtn.disabled = false;
+        ipsSaveLabel.textContent = "Tentar novamente";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+title = "funil-cloudflare"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "meta-access-token"
+description = "Token da Meta (Graph/Marketing API)"
+regex = '''EAA[A-Za-z0-9]{40,}'''
+
+[[rules]]
+id = "mercadopago-access-token"
+description = "Access token do Mercado Pago"
+regex = '''(APP_USR|TEST)-\d{10,}-\d{6}-[a-f0-9]{32}-\d{6,}'''
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Token de API da Cloudflare atribuído a variável"
+regex = '''(?i)cloudflare[_-]?api[_-]?token\s*[=:]\s*["']?[A-Za-z0-9_-]{40}'''

@@ -1,0 +1,21 @@
+-- Dados iniciais aplicados pelo `npm run setup`. Idempotente.
+-- {{PUBLIC_URL}} é trocado pela URL pública (https://APP_HOSTNAME).
+
+INSERT OR IGNORE INTO settings (key, value) VALUES ('blocked_ips', '[]');
+
+-- Menu do /painel: telas internas, páginas públicas e atalhos externos.
+INSERT OR IGNORE INTO painel_links (type, name, description, url, position) VALUES
+  ('internal', 'Leads',                  'Leads capturados e status no checkout',          '{{PUBLIC_URL}}/leads',              10),
+  ('internal', 'Vendas',                 'Pagamentos, reembolsos, histórico e exportação', '{{PUBLIC_URL}}/vendas',             20),
+  ('internal', 'Funil',                  'Conversão por etapa, por funil e por UTM',       '{{PUBLIC_URL}}/funil',              30),
+  ('internal', 'Meta',                   'Campanhas, conjuntos e anúncios da Meta Ads',    '{{PUBLIC_URL}}/meta',               40),
+  ('internal', 'Ofertas',                'Preços, estoque, order bumps e e-mail pós-compra', '{{PUBLIC_URL}}/ofertas',          50),
+  ('internal', 'Seções',                 'Leitura, rolagem e cliques por seção das páginas', '{{PUBLIC_URL}}/secoes',           60),
+  ('internal', 'Diagnóstico do checkout', 'Onde os visitantes param no checkout',          '{{PUBLIC_URL}}/checkout-analytics', 70),
+  ('public',   'Página exemplo',         'Modelo de página de vendas com Pixel e CAPI',    '{{PUBLIC_URL}}/exemplo',            100),
+  ('public',   'Checkout exemplo',       'Checkout da oferta de exemplo',                  '{{PUBLIC_URL}}/checkout/produto-exemplo', 110),
+  ('public',   'Obrigado',               'Página de agradecimento pós-compra',             '{{PUBLIC_URL}}/obrigado',           120),
+  ('external', 'Gerenciador de Anúncios', 'Meta Ads Manager',                              'https://adsmanager.facebook.com/',  200),
+  ('external', 'Gerenciador de Eventos',  'Pixel, Conversions API e eventos de teste',     'https://business.facebook.com/events_manager2/', 210),
+  ('external', 'Cloudflare',             'Workers, D1 e domínio',                          'https://dash.cloudflare.com/',      220),
+  ('external', 'Mercado Pago',           'Credenciais, vendas e webhooks',                 'https://www.mercadopago.com.br/developers/panel/app', 230);

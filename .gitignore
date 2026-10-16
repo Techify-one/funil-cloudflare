@@ -1,0 +1,22 @@
+# segredos e config da instância
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+wrangler.toml
+.instance.json
+
+# build/deps
+node_modules/
+.wrangler/
+dist/
+test-results/
+playwright-report/
+parity-out/
+*.log
+.DS_Store
+.wrangler-seed.sql
+analises/
+.claude/settings.local.json

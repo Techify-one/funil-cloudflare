@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Abandono do checkout · __BRAND_NAME__</title>
+  <style>
+    :root{color-scheme:dark;--bg:#070b14;--card:#101827;--line:#243044;--text:#edf3ff;--muted:#91a0b8;--green:#36d399;--yellow:#fbbf24;--red:#fb7185;--blue:#60a5fa}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}.wrap{max-width:1200px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.top a{color:#c7d2fe;text-decoration:none}.filters{display:flex;gap:8px}.filters button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}.filters button.active{background:#3730a3;border-color:#6366f1}.note{color:var(--muted);font-size:13px;line-height:1.45}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px}.card small{display:block;color:var(--muted);margin-bottom:7px}.card strong{font-size:27px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.panel h2{font-size:17px;margin:0 0 12px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid var(--line);padding:10px 6px;font-size:14px}th{color:var(--muted);font-weight:600}.bar{height:7px;background:#26344a;border-radius:8px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--blue)}.empty{color:var(--muted);padding:18px 4px}.legend{margin-top:14px;padding:12px;border-left:3px solid var(--yellow);background:#161a24;color:#cbd5e1;font-size:13px;line-height:1.5}.error{color:#fecdd3}.green{color:var(--green)}.offer-select{border:1px solid var(--line);background:var(--card);color:var(--text);padding:4px 8px;border-radius:8px;font-size:13px;max-width:100%}
+    @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}@media(max-width:420px){.cards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body><main class="wrap">
+  <div class="top">
+    <div><a href="/painel">← Painel</a><h1>Por que abandonaram o checkout</h1><p class="note">Oferta: <select id="offer" class="offer-select" aria-label="Oferta"><option value="">Carregando…</option></select> Uma sessão só vira abandono depois de 30 minutos sem atividade.</p></div>
+    <div class="filters"><button data-range="1d">Hoje</button><button data-range="7d">7 dias</button><button class="active" data-range="30d">30 dias</button><button data-range="90d">90 dias</button></div>
+  </div>
+
+  <section class="cards" id="cards"><div class="card"><small>Carregando</small><strong>…</strong></div></section>
+  <section class="grid">
+    <article class="panel"><h2>Motivo provável da saída</h2><div id="outcomes"></div></article>
+    <article class="panel"><h2>Etapa onde pararam</h2><div id="stages"></div></article>
+  </section>
+  <div class="legend"><b>Como interpretar:</b> “Segundo plano” inclui trocar de aba, minimizar, bloquear o celular ou abrir outro aplicativo. “Saída sem destino conhecido” pode ser fechar a aba, voltar para um site externo ou navegar para outro endereço; o navegador não permite separar esses casos com precisão.</div>
+</main>
+<script>
+const outcomeLabels={purchased:'Comprou',returned_to_site:'Voltou para outra página do site',background_now:'Está em segundo plano agora',abandoned_background:'Abandonou após ir ao segundo plano',unknown_exit:'Saída sem destino conhecido',active_visible:'Ativo no checkout agora',abandoned_inactive:'Parou de interagir / app encerrado'};
+const stageLabels={opened:'Não preencheu nada',nome:'Parou depois do nome',email:'Parou depois do e-mail',telefone:'Parou depois do telefone',escolheu_metodo:'Escolheu pagamento, mas não tentou pagar',payment_attempt:'Tentou pagar',pix_gerado:'Gerou Pix e não pagou'};
+const fmt=n=>Number(n||0).toLocaleString('pt-BR');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const selectedOffer=new URL(location.href).searchParams.get('offer')||'';
+const offerEl=document.getElementById('offer');
+function showOffer(code){if(!code)return;if(![...offerEl.options].some(o=>o.value===code))offerEl.insertAdjacentHTML('afterbegin',`<option value="${esc(code)}">${esc(code)}</option>`);offerEl.value=code}
+const offersReady=(async()=>{try{const r=await fetch('/dashboard/api/offers',{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Falha ao carregar ofertas');const offers=d.offers||[];if(!offers.length){offerEl.innerHTML='<option value="">Nenhuma oferta cadastrada</option>';return}offerEl.innerHTML=offers.map(o=>`<option value="${esc(o.code)}">${esc(o.name)} (${esc(o.code)})${o.is_active?'':' · inativa'}</option>`).join('');showOffer(selectedOffer)}catch(e){offerEl.innerHTML='<option value="">'+esc(e.message)+'</option>'}})();
+offerEl.addEventListener('change',()=>{if(!offerEl.value)return;const u=new URL(location.href);u.searchParams.set('offer',offerEl.value);location.href=u.toString()});
+function table(rows,labelMap){if(!rows.length)return '<div class="empty">Ainda não há dados neste período.</div>';const max=Math.max(...rows.map(r=>Number(r.count)||0),1);return '<table><thead><tr><th>Classificação</th><th>Quantidade</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(labelMap[r.outcome||r.last_stage]||r.outcome||r.last_stage)}<div class="bar"><i style="width:${(Number(r.count)||0)*100/max}%"></i></div></td><td>${esc(fmt(r.count))}</td></tr>`).join('')+'</tbody></table>'}
+async function load(range){document.querySelectorAll('[data-range]').forEach(b=>b.classList.toggle('active',b.dataset.range===range));try{const r=await fetch('/dashboard/api/checkout-analytics?range='+encodeURIComponent(range)+(selectedOffer?'&offer='+encodeURIComponent(selectedOffer):''),{cache:'no-store'});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Falha ao carregar');if(!selectedOffer&&d.offer)offersReady.then(()=>showOffer(d.offer));const m=d.metrics||{},sessions=Number(m.sessions)||0,purchases=Number(m.purchases)||0,conversion=sessions?(purchases*100/sessions).toFixed(1):'0,0';document.getElementById('cards').innerHTML=`
+<div class="card"><small>Sessões coletadas</small><strong>${fmt(sessions)}</strong></div>
+<div class="card"><small>Compras vinculadas</small><strong class="green">${fmt(purchases)}</strong></div>
+<div class="card"><small>Conversão observada</small><strong>${conversion}%</strong></div>
+<div class="card"><small>Tempo visível médio</small><strong>${fmt(m.avg_visible_seconds)}s</strong></div>
+<div class="card"><small>Foram ao segundo plano</small><strong>${fmt(m.went_background)}</strong></div>
+<div class="card"><small>Voltaram ao checkout</small><strong>${fmt(m.resumed)}</strong></div>
+<div class="card"><small>Erros de validação</small><strong>${fmt(m.validation_errors)}</strong></div>
+<div class="card"><small>Tentativas de pagamento</small><strong>${fmt(m.payment_attempts)}</strong></div>
+<div class="card"><small>Escolheram Pix</small><strong>${fmt(m.chose_pix)}</strong></div>
+<div class="card"><small>Escolheram cartão</small><strong>${fmt(m.chose_card)}</strong></div>
+<div class="card"><small>Marcaram o adicional</small><strong>${fmt(m.selected_bump)}</strong></div>`;document.getElementById('outcomes').innerHTML=table(d.summary||[],outcomeLabels);document.getElementById('stages').innerHTML=table(d.stages||[],stageLabels)}catch(e){document.getElementById('cards').innerHTML='<div class="card error">'+esc(e.message)+'</div>'}}
+document.querySelectorAll('[data-range]').forEach(b=>b.addEventListener('click',()=>load(b.dataset.range)));load('30d');
+</script></body></html>

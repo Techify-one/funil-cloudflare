@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!-- Página de exemplo, registrada como "exemplo" em site/pages.config.mjs (contrato em public/pages/_template/index.html). -->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Produto Exemplo | Organize sua rotina</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --accent:#047857;        /* cor dos botões e destaques: troque pela da sua marca */
+    --accent-dark:#065F46;
+    --accent-soft:#ECFDF5;
+    --ink:#0F172A;
+    --ink-soft:#334155;
+    --ink-muted:#64748B;
+    --bg:#FFFFFF;
+    --bg-soft:#F1F5F9;
+    --bg-dark:#0F172A;
+    --line:#E2E8F0;
+    --danger:#B91C1C;
+    --radius:14px;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding-bottom:76px;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px}
+  section{padding:44px 0}
+  .soft{background:var(--bg-soft)}
+  .center{text-align:center}
+  h2{font-size:26px;line-height:1.25;margin-bottom:18px;letter-spacing:-.3px}
+  p{margin-bottom:14px;font-size:17px;color:var(--ink-soft)}
+  strong{color:var(--ink)}
+
+  .btn{
+    display:block;width:100%;max-width:460px;margin:12px auto 0;
+    background:var(--accent);color:#fff;text-decoration:none;text-align:center;
+    font-size:18px;font-weight:800;padding:18px 22px;border-radius:999px;
+    box-shadow:0 6px 18px rgba(15,23,42,.18);
+  }
+  .btn:active{transform:scale(.98)}
+  .btn small{display:block;font-weight:600;font-size:13px;opacity:.92;margin-top:3px}
+
+  .hero{background:var(--bg-dark);color:#fff;padding:36px 0 44px}
+  .hero .chip{
+    display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+    color:#E2E8F0;font-size:12.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    padding:7px 14px;border-radius:999px;margin-bottom:16px;
+  }
+  .hero h1{font-size:32px;line-height:1.18;letter-spacing:-.5px;font-weight:900;margin-bottom:14px}
+  .hero h1 em{font-style:normal;color:#6EE7B7}
+  .hero .sub{font-size:18px;color:#CBD5E1;margin-bottom:20px}
+  .hero .sub strong{color:#fff}
+  .trust{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .trust span{
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+    color:#E2E8F0;font-size:13.5px;font-weight:600;padding:8px 13px;border-radius:999px;
+  }
+
+  .pain li{
+    list-style:none;background:#fff;border:1px solid var(--line);border-left:4px solid var(--danger);
+    border-radius:10px;padding:14px 16px;margin-bottom:10px;font-size:16px;color:var(--ink-soft);
+  }
+  .check li{
+    list-style:none;padding:10px 0 10px 32px;position:relative;font-size:16.5px;color:var(--ink-soft);
+    border-bottom:1px dashed var(--line);
+  }
+  .check li:last-child{border-bottom:0}
+  .check li::before{content:"✔";position:absolute;left:4px;top:10px;color:var(--accent);font-weight:900}
+  .check li b{color:var(--ink)}
+
+  .cards{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:640px){.cards{grid-template-columns:1fr 1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;font-size:15.5px;color:var(--ink-soft)}
+  .card b{display:block;font-size:16.5px;color:var(--ink);margin-bottom:4px}
+  .card .ico{font-size:24px;display:block;margin-bottom:8px}
+
+  .step{display:flex;gap:14px;margin-bottom:16px;align-items:flex-start}
+  .step .n{
+    flex:0 0 40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;
+  }
+  .step b{display:block;font-size:17px;margin-bottom:2px}
+  .step p{font-size:15.5px;margin:0}
+
+  .quote{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+  .quote p{font-size:16px;margin-bottom:8px;color:var(--ink)}
+  .quote span{font-size:14px;color:var(--ink-muted);font-weight:600}
+
+  .offer{background:var(--bg-dark);color:#fff;border-radius:20px;padding:30px 22px;text-align:center}
+  .offer h2{color:#fff}
+  .offer .old{font-size:18px;color:#94A3B8;text-decoration:line-through}
+  .offer .price{font-size:50px;font-weight:900;letter-spacing:-1px;color:#6EE7B7;line-height:1.05}
+  .offer .price sup{font-size:22px;font-weight:800}
+  .offer .parc{font-size:15.5px;color:#CBD5E1;margin:6px 0 8px}
+  .offer ul{margin:18px auto;max-width:420px;text-align:left}
+  .offer ul li{list-style:none;padding:7px 0 7px 30px;position:relative;font-size:15.5px;color:#E2E8F0}
+  .offer ul li::before{content:"✔";position:absolute;left:2px;color:#6EE7B7;font-weight:900}
+  .offer .safe{font-size:12.5px;color:#94A3B8;margin-top:14px}
+
+  .gbox{
+    border:2px dashed var(--accent);background:var(--accent-soft);border-radius:16px;padding:22px 18px;
+    display:flex;gap:16px;align-items:flex-start;
+  }
+  .gbox .shield{font-size:40px;line-height:1}
+  .gbox b{font-size:18px;display:block;margin-bottom:6px}
+  .gbox p{font-size:15.5px;margin:0}
+
+  details{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;padding:0 16px}
+  details summary{
+    cursor:pointer;font-weight:700;font-size:16px;padding:15px 28px 15px 0;list-style:none;position:relative;
+  }
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"+";position:absolute;right:2px;top:12px;font-size:22px;color:var(--accent)}
+  details[open] summary::after{content:"–"}
+  details p{font-size:15.5px;padding-bottom:15px;margin:0}
+
+  .sticky{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;
+    border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 20px rgba(15,23,42,.08);display:flex;align-items:center;gap:12px;
+  }
+  .sticky .pp{font-size:13px;line-height:1.3;color:var(--ink-muted)}
+  .sticky .pp b{display:block;font-size:16px;color:var(--ink)}
+  .sticky a{
+    flex:1;background:var(--accent);color:#fff;text-decoration:none;text-align:center;
+    font-weight:800;font-size:15px;padding:13px 10px;border-radius:999px;white-space:nowrap;
+  }
+
+  footer{background:var(--bg-dark);color:#94A3B8;padding:32px 0 40px;font-size:12.5px;line-height:1.6}
+  footer p{font-size:12.5px;color:#94A3B8}
+  footer b{color:#E2E8F0}
+  @media(min-width:640px){.hero h1{font-size:40px}h2{font-size:30px}}
+</style>
+</head>
+<body>
+
+<header class="hero" data-section="hero">
+  <div class="wrap">
+    <h1>Organize sua rotina e <em>ganhe 2 horas por dia</em> em 14 dias</h1>
+    <p class="sub">O <strong>Produto Exemplo</strong> é um método simples, em aulas curtas, para quem vive apagando incêndio e quer terminar o dia com tudo feito.</p>
+    <a class="btn" href="#checkout" data-cta="hero">QUERO COMEÇAR AGORA
+      <small>Acesso imediato · Garantia de 7 dias</small>
+    </a>
+    <div class="trust">
+      <span>🔒 Compra segura</span>
+      <span>⚡ Acesso imediato</span>
+      <span>🛡️ Garantia de 7 dias</span>
+    </div>
+  </div>
+</header>
+
+<section data-section="problema">
+  <div class="wrap">
+    <h2>Você termina o dia cansado e com a sensação de que não fez nada?</h2>
+    <ul class="pain">
+      <li>😩 A lista de tarefas só cresce, nunca diminui</li>
+      <li>💸 Prazos estourados custam clientes e dinheiro</li>
+      <li>⏳ Sobra pouco tempo para família, descanso e saúde</li>
+    </ul>
+  </div>
+</section>
+
+<section class="soft" data-section="solucao">
+  <div class="wrap">
+    <h2>A solução: um método de 15 minutos por dia</h2>
+    <p>Em vez de mais um aplicativo, você aprende a decidir o que importa e a fazer primeiro.</p>
+    <ul class="check">
+      <li><b>Planejamento em 10 minutos:</b> um roteiro fixo para começar o dia</li>
+      <li><b>Blocos de foco:</b> menos interrupção, mais tarefa concluída</li>
+      <li><b>Revisão semanal:</b> você enxerga o que funcionou e ajusta</li>
+    </ul>
+  </div>
+</section>
+
+<section data-section="beneficios">
+  <div class="wrap">
+    <h2>O que você ganha</h2>
+    <div class="cards">
+      <div class="card"><span class="ico">🎯</span><b>Clareza</b>Saber exatamente o que fazer ao abrir o computador.</div>
+      <div class="card"><span class="ico">⏱️</span><b>Tempo de volta</b>Menos horas perdidas com tarefas que não importam.</div>
+      <div class="card"><span class="ico">📈</span><b>Mais entregas</b>Projetos concluídos no prazo, sem correria.</div>
+      <div class="card"><span class="ico">😌</span><b>Menos estresse</b>Fim de dia leve, sem pendência na cabeça.</div>
+    </div>
+  </div>
+</section>
+
+<section class="soft" data-section="como-funciona">
+  <div class="wrap">
+    <h2>Como funciona, em 3 passos</h2>
+    <div class="step"><div class="n">1</div><div><b>Assista às aulas</b><p>14 aulas de até 10 minutos, no celular ou no computador.</p></div></div>
+    <div class="step"><div class="n">2</div><div><b>Aplique no dia seguinte</b><p>Cada aula termina com uma tarefa prática e um modelo pronto.</p></div></div>
+    <div class="step"><div class="n">3</div><div><b>Colha o resultado</b><p>Em duas semanas, a nova rotina vira hábito.</p></div></div>
+  </div>
+</section>
+
+<section data-section="prova">
+  <div class="wrap">
+    <h2>Quem já usa</h2>
+    <div class="quote"><p>"Parei de levar trabalho para casa na segunda semana."</p><span>Ana, Curitiba</span></div>
+    <div class="quote"><p>"Os modelos prontos me pouparam horas de planejamento."</p><span>Marcos, Recife</span></div>
+  </div>
+</section>
+
+<section class="soft" data-section="oferta" id="oferta">
+  <div class="wrap">
+    <div class="offer">
+      <h2>Tudo isso por</h2>
+      <div class="old">De R$ 197</div>
+      <div class="price"><sup>R$</sup> 97</div>
+      <div class="parc">à vista no Pix ou parcelado no cartão</div>
+      <ul>
+        <li>14 aulas curtas e práticas</li>
+        <li>Modelos prontos de planejamento</li>
+        <li>Acesso por 12 meses</li>
+      </ul>
+      <a class="btn" href="#checkout" data-cta="oferta">QUERO GARANTIR O MEU
+        <small>Acesso enviado por e-mail</small>
+      </a>
+      <p class="safe">🔒 Pagamento seguro · Pix ou cartão</p>
+    </div>
+  </div>
+</section>
+
+<section data-section="garantia">
+  <div class="wrap">
+    <div class="gbox">
+      <div class="shield">🛡️</div>
+      <div>
+        <b>Garantia de 7 dias</b>
+        <p>Se não for para você, devolvemos 100% do valor. Sem burocracia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="soft" data-section="faq">
+  <div class="wrap">
+    <h2>Perguntas frequentes</h2>
+    <details><summary>Preciso de algum programa?</summary><p>Não. Basta um celular ou computador com internet.</p></details>
+    <details><summary>Quanto tempo por dia?</summary><p>Cerca de 15 minutos: 10 de aula e 5 de prática.</p></details>
+    <details><summary>Como recebo o acesso?</summary><p>Assim que o pagamento é confirmado, o acesso chega no seu e-mail.</p></details>
+  </div>
+</section>
+
+<section class="center" data-section="cta-final">
+  <div class="wrap">
+    <h2>Daqui a 14 dias sua rotina pode ser outra</h2>
+    <p>Aulas curtas, modelos prontos e 7 dias de garantia.</p>
+    <a class="btn" href="#checkout" data-cta="final">COMEÇAR AGORA
+      <small>Garantia de 7 dias</small>
+    </a>
+  </div>
+</section>
+
+<footer data-section="rodape">
+  <div class="wrap">
+    <p><b>Minha Empresa</b> · Produto Exemplo</p>
+    <p>Página de demonstração. Resultados dependem da dedicação de cada pessoa.</p>
+    <p>© 2026 Minha Empresa. Todos os direitos reservados.</p>
+  </div>
+</footer>
+
+<div class="sticky">
+  <div class="pp">De <s>R$ 197</s> por<b>R$ 97</b></div>
+  <a href="#checkout" data-cta="sticky">QUERO AGORA</a>
+</div>
+
+</body>
+</html>

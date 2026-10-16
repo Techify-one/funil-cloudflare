@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leads</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    .spinner { width: 14px; height: 14px; border: 2px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    table { border-collapse: separate; border-spacing: 0; }
+    thead th { position: sticky; top: 0; background: #0f1829; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .pill-success { background: rgba(34,197,94,.15); color: #4ade80; }
+    .pill-error { background: rgba(239,68,68,.15); color: #f87171; }
+    .pill-warn { background: rgba(234,179,8,.15); color: #facc15; }
+    .pill-info { background: rgba(56,189,248,.15); color: #38bdf8; }
+    .pill-muted { background: rgba(148,163,184,.15); color: #94a3b8; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 grid place-items-center text-lg">📊</div>
+        <div>
+          <h1 class="text-lg font-semibold">Leads</h1>
+          <p class="text-xs text-slate-400">Checkout & Leads, Cloudflare D1</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/painel"
+          class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition shadow-lg shadow-indigo-600/20"
+          title="Painel: todas as páginas">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Painel
+        </a>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="inline-flex items-center gap-2 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 cursor-pointer select-none">
+          <input id="hide-internal" type="checkbox" class="accent-sky-500" checked>
+          <span>Esconder Leads de IPs de Teste</span>
+        </label>
+        <button id="refresh" class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-3 py-2 transition">
+          Atualizar
+        </button>
+
+        <!-- Engrenagem de configurações -->
+        <div class="relative">
+          <button id="settings-btn" type="button"
+            class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+            title="Configurações" aria-haspopup="true" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <div id="settings-menu"
+            class="hidden absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-30"
+            role="menu">
+            <button id="open-blocked-ips" type="button"
+              class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-800 transition flex items-center gap-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>Editar IPs/blocos bloqueados</span>
+            </button>
+          </div>
+        </div>
+
+        <span id="status" class="text-xs text-slate-400 ml-2"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <section class="card p-5">
+      <div class="flex items-center justify-between mb-3 gap-3 flex-wrap">
+        <h2 class="font-semibold shrink-0">Leads recentes</h2>
+        <div class="relative flex-1 min-w-[200px] max-w-xl">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="search" type="search" placeholder="Pesquisar por nome, e-mail ou telefone…"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg text-sm pl-9 pr-9 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button id="search-clear" type="button"
+            class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 grid place-items-center"
+            title="Limpar pesquisa">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <span id="recent-hint" class="text-xs text-slate-400 shrink-0">–</span>
+      </div>
+      <div class="overflow-x-auto max-h-[640px] overflow-y-auto rounded-lg border border-slate-800">
+        <table class="w-full text-sm">
+          <thead class="text-left text-xs uppercase text-slate-400">
+            <tr>
+              <th class="px-3 py-2">ID</th>
+              <th class="px-3 py-2">Data</th>
+              <th class="px-3 py-2">Nome</th>
+              <th class="px-3 py-2">E-mail</th>
+              <th class="px-3 py-2">Telefone</th>
+              <th class="px-3 py-2">Método</th>
+              <th class="px-3 py-2">Status</th>
+              <th class="px-3 py-2">Página</th>
+              <th class="px-3 py-2 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="recent-body" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between gap-3 mt-3 flex-wrap text-sm">
+        <div class="flex items-center gap-2">
+          <label for="page-size" class="text-slate-400">Mostrar</label>
+          <select id="page-size" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+          <span class="text-slate-400">por página</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="page-info" class="text-slate-400">–</span>
+          <div class="flex items-center gap-1">
+            <button id="page-prev" type="button" class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition" title="Página anterior">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="page-next" type="button" class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition" title="Próxima página">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-500 pt-4 pb-10">
+      Dados em tempo real via Cloudflare D1 · <span id="footer-updated"></span>
+    </footer>
+  </main>
+
+  <!-- Modal de confirmação -->
+  <div id="modal-delete" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-red-500/15 grid place-items-center text-red-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </div>
+        <div class="flex-1">
+          <h3 id="modal-title" class="text-lg font-semibold">Apagar esta lead?</h3>
+          <p class="text-sm text-slate-400 mt-1">
+            Esta ação é <strong class="text-red-400">irreversível</strong>. A lead abaixo será removida permanentemente do banco.
+          </p>
+          <div id="modal-lead" class="mt-3 p-3 rounded-lg bg-slate-900/70 border border-slate-700 text-sm hidden">
+            <div><span class="text-slate-400">Nome:</span> <span id="modal-lead-name" class="font-medium"></span></div>
+            <div><span class="text-slate-400">E-mail:</span> <span id="modal-lead-email"></span></div>
+          </div>
+          <p id="modal-error" class="text-sm text-red-400 mt-3 hidden"></p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button id="modal-cancel"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Cancelar
+        </button>
+        <button id="modal-confirm"
+          class="bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition inline-flex items-center gap-2">
+          <span id="modal-confirm-label">Sim, apagar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: editar IPs/blocos bloqueados -->
+  <div id="modal-ips" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-lg w-full p-6" role="dialog" aria-modal="true" aria-labelledby="modal-ips-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-sky-500/15 grid place-items-center text-sky-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 id="modal-ips-title" class="text-lg font-semibold">IPs/blocos bloqueados</h3>
+          <p class="text-sm text-slate-400 mt-1">
+            Esses IPs/redes são ignorados nas estatísticas (filtro "Esconder Leads de IPs de Teste").
+            Aceita IPv4 ou IPv6, IP único ou CIDR (ex.: <code class="text-slate-300">203.0.113.0/24</code>).
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1" id="ips-list"></div>
+
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <input id="ips-input-value" type="text" placeholder="IP ou CIDR (ex.: 1.2.3.4 ou 2001:db8::/32)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <input id="ips-input-label" type="text" placeholder="Descrição (opcional)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <button id="ips-add" type="button"
+          class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Adicionar
+        </button>
+      </div>
+      <p id="modal-ips-error" class="text-sm text-red-400 mt-3 hidden"></p>
+      <p id="modal-ips-info" class="text-xs text-slate-500 mt-2">
+        IPv4: máscaras /8, /16, /24 ou /32. IPv6: múltiplos de /16 até /128.
+      </p>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <button id="modal-ips-cancel"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Cancelar
+        </button>
+        <button id="modal-ips-save"
+          class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition inline-flex items-center gap-2">
+          <span id="modal-ips-save-label">Salvar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SETTINGS_API = "/dashboard/api/settings";
+    const HIDE_INTERNAL_KEY = "hide_internal";
+
+    function isHidingInternal() {
+      return document.getElementById("hide-internal").checked;
+    }
+
+    (function initHideInternal() {
+      const cb = document.getElementById("hide-internal");
+      const stored = localStorage.getItem(HIDE_INTERNAL_KEY);
+      if (stored !== null) cb.checked = stored === "1";
+      cb.addEventListener("change", () => {
+        localStorage.setItem(HIDE_INTERNAL_KEY, cb.checked ? "1" : "0");
+        leadsState.offset = 0;
+        loadLeads();
+      });
+    })();
+
+    function pillClass(status) {
+      const s = (status || "").toLowerCase();
+      if (s === "comprou" || s.includes("success") || s.includes("paid") || s.includes("approved") || s.includes("completed")) return "pill-success";
+      if (s.includes("error") || s.includes("fail")) return "pill-error";
+      if (s.includes("pix") || s.includes("pend") || s.includes("wait")) return "pill-warn";
+      if (s.includes("shown") || s.includes("view")) return "pill-info";
+      return "pill-muted";
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "–";
+      const d = new Date(iso);
+      return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function setStatus(msg, loading = false) {
+      const el = document.getElementById("status");
+      el.innerHTML = loading ? `<span class="spinner"></span> ${escapeHtml(msg)}` : escapeHtml(msg);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function renderRecent(rows) {
+      const body = document.getElementById("recent-body");
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-slate-500">Nenhum lead encontrado.</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="px-3 py-2 text-slate-500 font-mono text-xs whitespace-nowrap">${escapeHtml(r.id)}</td>
+          <td class="px-3 py-2 text-slate-400 whitespace-nowrap">${escapeHtml(fmtDate(r.created_at))}</td>
+          <td class="px-3 py-2 font-medium">${escapeHtml(r.name || "–")}</td>
+          <td class="px-3 py-2 text-slate-300">${escapeHtml(r.email || "–")}</td>
+          <td class="px-3 py-2 text-slate-300 whitespace-nowrap">${escapeHtml(r.phone || "–")}</td>
+          <td class="px-3 py-2">${escapeHtml(r.method || "–")}</td>
+          <td class="px-3 py-2"><span class="pill ${pillClass(r.status)}">${escapeHtml(r.status || "–")}</span></td>
+          <td class="px-3 py-2 text-slate-400 whitespace-nowrap font-mono text-xs">${escapeHtml(r.utm_page || "–")}</td>
+          <td class="px-3 py-2 text-right">
+            <button class="btn-del-row inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white transition"
+              data-id="${escapeHtml(r.id)}"
+              data-name="${escapeHtml(r.name || "")}"
+              data-email="${escapeHtml(r.email || "")}"
+              title="Apagar esta lead">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </td>
+        </tr>
+      `).join("");
+
+      body.querySelectorAll(".btn-del-row").forEach(btn => {
+        btn.addEventListener("click", () => openModal({
+          id: btn.dataset.id,
+          name: btn.dataset.name,
+          email: btn.dataset.email,
+        }));
+      });
+    }
+
+    // ===== Modal: apagar lead individual =====
+    const modal = document.getElementById("modal-delete");
+    const btnCancel = document.getElementById("modal-cancel");
+    const btnConfirm = document.getElementById("modal-confirm");
+    const confirmLabel = document.getElementById("modal-confirm-label");
+    const modalError = document.getElementById("modal-error");
+    const modalLeadBox = document.getElementById("modal-lead");
+    const modalLeadName = document.getElementById("modal-lead-name");
+    const modalLeadEmail = document.getElementById("modal-lead-email");
+
+    let pendingDelete = null;
+
+    function openModal(lead) {
+      pendingDelete = lead;
+      modalError.classList.add("hidden");
+      modalError.textContent = "";
+      confirmLabel.textContent = "Sim, apagar";
+      btnConfirm.disabled = false;
+      btnCancel.disabled = false;
+      if (lead && (lead.name || lead.email)) {
+        modalLeadName.textContent = lead.name || "–";
+        modalLeadEmail.textContent = lead.email || "–";
+        modalLeadBox.classList.remove("hidden");
+      } else {
+        modalLeadBox.classList.add("hidden");
+      }
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+    function closeModal() {
+      pendingDelete = null;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    btnCancel.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
+    });
+
+    btnConfirm.addEventListener("click", async () => {
+      if (!pendingDelete?.id) return;
+      btnConfirm.disabled = true;
+      btnCancel.disabled = true;
+      confirmLabel.innerHTML = '<span class="spinner"></span> Apagando…';
+      modalError.classList.add("hidden");
+      try {
+        const r = await fetch(`/dashboard/api/leads/${encodeURIComponent(pendingDelete.id)}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        closeModal();
+        setStatus("Lead apagada com sucesso");
+        await loadLeads();
+      } catch (e) {
+        modalError.textContent = "Erro: " + e.message;
+        modalError.classList.remove("hidden");
+        confirmLabel.textContent = "Tentar novamente";
+        btnConfirm.disabled = false;
+        btnCancel.disabled = false;
+      }
+    });
+
+    // ===== Pesquisa e paginação de leads =====
+    const searchEl = document.getElementById("search");
+    const searchClearEl = document.getElementById("search-clear");
+    const recentHintEl = document.getElementById("recent-hint");
+    const pageSizeEl = document.getElementById("page-size");
+    const pagePrevEl = document.getElementById("page-prev");
+    const pageNextEl = document.getElementById("page-next");
+    const pageInfoEl = document.getElementById("page-info");
+    let searchTimer = null;
+    let searchAbort = null;
+
+    const leadsState = { limit: 50, offset: 0, total: 0, q: "" };
+
+    function currentQuery() {
+      return searchEl.value.trim();
+    }
+
+    function updatePaginationUI() {
+      const { offset, limit, total, q } = leadsState;
+      const start = total === 0 ? 0 : offset + 1;
+      const end = Math.min(offset + limit, total);
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const currentPage = total === 0 ? 1 : Math.floor(offset / limit) + 1;
+
+      if (q) {
+        recentHintEl.textContent = total === 0
+          ? "Nenhum resultado"
+          : `${start}–${end} de ${total} resultado${total === 1 ? "" : "s"}`;
+      } else {
+        recentHintEl.textContent = total === 0
+          ? "Nenhum lead"
+          : `${start}–${end} de ${total}`;
+      }
+
+      pageInfoEl.textContent = total === 0 ? "–" : `Página ${currentPage} de ${totalPages}`;
+      pagePrevEl.disabled = offset === 0;
+      pageNextEl.disabled = offset + limit >= total;
+    }
+
+    async function loadLeads() {
+      const q = currentQuery();
+      leadsState.q = q;
+      searchClearEl.classList.toggle("hidden", q.length === 0);
+
+      if (searchAbort) searchAbort.abort();
+      searchAbort = new AbortController();
+
+      recentHintEl.innerHTML = '<span class="spinner"></span> ' + (q ? "pesquisando…" : "carregando…");
+      try {
+        const params = new URLSearchParams({
+          limit: String(leadsState.limit),
+          offset: String(leadsState.offset),
+        });
+        if (q) params.set("q", q);
+        if (!isHidingInternal()) params.set("include_internal", "1");
+        const r = await fetch(`/dashboard/api/leads/search?${params.toString()}`, {
+          credentials: "include",
+          cache: "no-store",
+          signal: searchAbort.signal,
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+
+        leadsState.total = data.total ?? 0;
+
+        if (leadsState.offset > 0 && leadsState.offset >= leadsState.total) {
+          const pages = Math.max(1, Math.ceil(leadsState.total / leadsState.limit));
+          leadsState.offset = (pages - 1) * leadsState.limit;
+          await loadLeads();
+          return;
+        }
+
+        renderRecent(data.results || []);
+        updatePaginationUI();
+        document.getElementById("footer-updated").textContent = "atualizado em " + new Date().toLocaleString("pt-BR");
+      } catch (e) {
+        if (e.name === "AbortError") return;
+        recentHintEl.textContent = "Erro: " + e.message;
+      }
+    }
+
+    searchEl.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        leadsState.offset = 0;
+        loadLeads();
+      }, 250);
+    });
+    searchClearEl.addEventListener("click", () => {
+      searchEl.value = "";
+      searchEl.focus();
+      leadsState.offset = 0;
+      loadLeads();
+    });
+
+    pageSizeEl.addEventListener("change", () => {
+      const n = parseInt(pageSizeEl.value, 10) || 50;
+      leadsState.limit = Math.min(Math.max(n, 1), 200);
+      leadsState.offset = 0;
+      loadLeads();
+    });
+
+    pagePrevEl.addEventListener("click", () => {
+      if (leadsState.offset === 0) return;
+      leadsState.offset = Math.max(0, leadsState.offset - leadsState.limit);
+      loadLeads();
+    });
+
+    pageNextEl.addEventListener("click", () => {
+      if (leadsState.offset + leadsState.limit >= leadsState.total) return;
+      leadsState.offset += leadsState.limit;
+      loadLeads();
+    });
+
+    document.getElementById("refresh").addEventListener("click", () => {
+      loadLeads();
+    });
+
+    // ===== Engrenagem (menu de configurações) =====
+    const settingsBtn = document.getElementById("settings-btn");
+    const settingsMenu = document.getElementById("settings-menu");
+
+    function toggleSettingsMenu(force) {
+      const willOpen = typeof force === "boolean" ? force : settingsMenu.classList.contains("hidden");
+      settingsMenu.classList.toggle("hidden", !willOpen);
+      settingsBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
+    settingsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSettingsMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (settingsMenu.classList.contains("hidden")) return;
+      if (settingsMenu.contains(e.target) || e.target === settingsBtn || settingsBtn.contains(e.target)) return;
+      toggleSettingsMenu(false);
+    });
+
+    // ===== Modal: IPs/blocos bloqueados =====
+    const ipsModal = document.getElementById("modal-ips");
+    const ipsList = document.getElementById("ips-list");
+    const ipsInputValue = document.getElementById("ips-input-value");
+    const ipsInputLabel = document.getElementById("ips-input-label");
+    const ipsAddBtn = document.getElementById("ips-add");
+    const ipsCancelBtn = document.getElementById("modal-ips-cancel");
+    const ipsSaveBtn = document.getElementById("modal-ips-save");
+    const ipsSaveLabel = document.getElementById("modal-ips-save-label");
+    const ipsErrorEl = document.getElementById("modal-ips-error");
+
+    let ipsDraft = [];
+
+    function ipsShowError(msg) {
+      ipsErrorEl.textContent = msg;
+      ipsErrorEl.classList.toggle("hidden", !msg);
+    }
+
+    function renderIpsList() {
+      if (!ipsDraft.length) {
+        ipsList.innerHTML = '<p class="text-sm text-slate-500 italic px-2 py-3">Nenhum IP/bloco cadastrado.</p>';
+        return;
+      }
+      ipsList.innerHTML = ipsDraft.map((e, i) => `
+        <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+          <div class="flex-1 min-w-0">
+            <div class="font-mono text-sm text-sky-300 truncate">${escapeHtml(e.value)}</div>
+            ${e.label ? `<div class="text-xs text-slate-400 truncate">${escapeHtml(e.label)}</div>` : ""}
+          </div>
+          <button type="button" data-idx="${i}" class="ip-remove inline-flex items-center justify-center w-8 h-8 rounded-md bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white transition shrink-0" title="Remover">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      `).join("");
+      ipsList.querySelectorAll(".ip-remove").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          ipsDraft.splice(idx, 1);
+          renderIpsList();
+        });
+      });
+    }
+
+    function validateIpEntryClient(input) {
+      const v = (input || "").trim();
+      if (!v) return { ok: false, reason: "Valor vazio" };
+      if (!/^[0-9a-fA-F.:*/]+$/.test(v)) return { ok: false, reason: "Caracteres inválidos" };
+      if (!v.includes("/")) {
+        if (!(v.includes(".") || v.includes(":"))) return { ok: false, reason: "Formato não reconhecido" };
+        return { ok: true, value: v };
+      }
+      const [addr, prefStr] = v.split("/");
+      const prefix = parseInt(prefStr, 10);
+      if (!Number.isFinite(prefix) || prefix < 0) return { ok: false, reason: "CIDR inválido" };
+      if (addr.includes(".") && !addr.includes(":")) {
+        if (![8, 16, 24, 32].includes(prefix)) return { ok: false, reason: "IPv4 aceita /8, /16, /24 ou /32" };
+        if (addr.split(".").length !== 4) return { ok: false, reason: "IPv4 inválido" };
+        return { ok: true, value: v };
+      }
+      if (addr.includes(":")) {
+        if (prefix === 128) return { ok: true, value: v };
+        if (prefix % 16 !== 0 || prefix < 16 || prefix > 112) return { ok: false, reason: "IPv6 aceita múltiplos de /16 até /128" };
+        return { ok: true, value: v };
+      }
+      return { ok: false, reason: "Formato não reconhecido" };
+    }
+
+    function ipsAdd() {
+      ipsShowError("");
+      const v = validateIpEntryClient(ipsInputValue.value);
+      if (!v.ok) { ipsShowError(v.reason); return; }
+      if (ipsDraft.some(e => e.value === v.value)) { ipsShowError("Entrada duplicada"); return; }
+      ipsDraft.push({ value: v.value, label: ipsInputLabel.value.trim().slice(0, 80) });
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      ipsInputValue.focus();
+      renderIpsList();
+    }
+
+    ipsAddBtn.addEventListener("click", ipsAdd);
+    ipsInputValue.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+    ipsInputLabel.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+
+    function openIpsModal(initial) {
+      ipsDraft = (initial || []).map(e => ({ value: e.value, label: e.label || "" }));
+      ipsShowError("");
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      renderIpsList();
+      ipsSaveBtn.disabled = false;
+      ipsCancelBtn.disabled = false;
+      ipsSaveLabel.textContent = "Salvar";
+      ipsModal.classList.remove("hidden");
+      ipsModal.classList.add("flex");
+      setTimeout(() => ipsInputValue.focus(), 50);
+    }
+    function closeIpsModal() {
+      ipsModal.classList.add("hidden");
+      ipsModal.classList.remove("flex");
+    }
+
+    document.getElementById("open-blocked-ips").addEventListener("click", async () => {
+      toggleSettingsMenu(false);
+      try {
+        const r = await fetch(SETTINGS_API, { cache: "no-store", credentials: "include" });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        openIpsModal(data.blocked_ips || []);
+      } catch (e) {
+        openIpsModal([]);
+        ipsShowError("Não foi possível carregar a lista atual: " + e.message);
+      }
+    });
+
+    ipsCancelBtn.addEventListener("click", closeIpsModal);
+    ipsModal.addEventListener("click", (e) => { if (e.target === ipsModal) closeIpsModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !ipsModal.classList.contains("hidden")) closeIpsModal();
+    });
+
+    ipsSaveBtn.addEventListener("click", async () => {
+      ipsShowError("");
+      ipsSaveBtn.disabled = true;
+      ipsCancelBtn.disabled = true;
+      ipsSaveLabel.innerHTML = '<span class="spinner"></span> Salvando…';
+      try {
+        const r = await fetch(SETTINGS_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ key: "blocked_ips", value: ipsDraft }),
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        closeIpsModal();
+        setStatus("Lista de IPs atualizada");
+        loadLeads();
+      } catch (e) {
+        ipsShowError("Erro: " + e.message);
+        ipsSaveBtn.disabled = false;
+        ipsCancelBtn.disabled = false;
+        ipsSaveLabel.textContent = "Tentar novamente";
+      }
+    });
+
+    loadLeads();
+    setInterval(loadLeads, 60_000);
+  </script>
+</body>
+</html>

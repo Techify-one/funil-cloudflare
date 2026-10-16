@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#047857">
+<title>Pagamento confirmado</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23047857'/><path d='M9 16.5l4.5 4.5L23 11.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
+<!-- Meta Pixel Code: o worker troca __META_PIXEL_ID__ por META_PIXEL_ID.
+     A compra (Purchase) é disparada pelo checkout; aqui só o PageView. -->
+<script>
+(function () {
+var pixelId = '__META_PIXEL_ID__';
+if (!/^\d+$/.test(pixelId)) return;
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', pixelId);
+fbq('track', 'PageView');
+})();
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=__META_PIXEL_ID__&ev=PageView&noscript=1"
+/></noscript>
+
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:#F1F5F9;
+  color:#0F172A;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px 16px;
+}
+.card{
+  max-width:440px;
+  width:100%;
+  background:#fff;
+  border:1px solid #E2E8F0;
+  border-radius:16px;
+  padding:32px 24px 28px;
+  text-align:center;
+  box-shadow:0 4px 16px rgba(15,23,42,.06);
+}
+.badge{
+  width:64px;height:64px;
+  margin:0 auto 16px;
+  border-radius:50%;
+  background:#D1FAE5;
+  display:grid;place-items:center;
+  position:relative;
+}
+.badge::after{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  border:2px solid rgba(4,120,87,.25);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{transform:scale(1);opacity:.6}
+  50%{transform:scale(1.1);opacity:0}
+}
+@media (prefers-reduced-motion: reduce){.badge::after{animation:none}}
+.badge svg{width:30px;height:30px;color:#047857}
+h1{
+  font-size:22px;
+  margin:0 0 10px;
+  font-weight:800;
+  letter-spacing:-.01em;
+  color:#0F172A;
+}
+p{
+  margin:0 0 8px;
+  color:#334155;
+  font-size:15px;
+  line-height:1.55;
+}
+p.lead{
+  font-size:16px;
+  color:#0F172A;
+  font-weight:600;
+}
+p.muted{
+  color:#475569;
+  font-size:13.5px;
+  margin-top:14px;
+}
+.steps{
+  list-style:none;
+  margin:18px 0 0;
+  padding:0;
+  text-align:left;
+  border-top:1px solid #E2E8F0;
+}
+.steps li{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:12px 0;
+  border-bottom:1px solid #E2E8F0;
+  font-size:14.5px;
+  color:#334155;
+}
+.steps li b{color:#0F172A}
+.steps .n{
+  flex:0 0 24px;height:24px;
+  border-radius:50%;
+  background:#047857;color:#fff;
+  font-size:13px;font-weight:700;
+  display:grid;place-items:center;
+}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="badge">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12 10 17 19 7"/></svg>
+  </div>
+  <h1>Pagamento confirmado!</h1>
+  <p class="lead">Enviamos os detalhes de acesso para o seu e-mail.</p>
+
+  <ol class="steps">
+    <li><span class="n">1</span><span>Abra o e-mail que você usou na compra.</span></li>
+    <li><span class="n">2</span><span>Procure a mensagem de <b>confirmação da compra</b>.</span></li>
+    <li><span class="n">3</span><span>Siga as instruções de acesso da mensagem.</span></li>
+  </ol>
+
+  <p class="muted">Não encontrou? Confira as pastas de spam e promoções. Pagamentos no Pix são confirmados em poucos minutos.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Gerado por `npm run setup` a partir deste modelo. Não edite wrangler.toml à mão:
+# mude o .env e rode o setup de novo.
+name = "__WORKER_NAME__"
+main = "src/index.js"
+compatibility_date = "2025-04-01"
+workers_dev = false
+
+routes = [
+  { pattern = "__APP_HOSTNAME__", custom_domain = true },
+]
+
+[vars]
+BRAND_NAME = "__BRAND_NAME__"
+STATEMENT_DESCRIPTOR = "__STATEMENT_DESCRIPTOR__"
+GUARANTEE_DAYS = "__GUARANTEE_DAYS__"
+DEFAULT_PAGE = "__DEFAULT_PAGE__"
+META_PIXEL_ID = "__META_PIXEL_ID__"
+META_API_VERSION = "v25.0"
+META_AD_ACCOUNT_ID = "__META_AD_ACCOUNT_ID__"
+META_AD_ACCOUNT_IDS = "__META_AD_ACCOUNT_IDS__"
+META_TEST_EVENT_CODE = "__META_TEST_EVENT_CODE__"
+MP_PUBLIC_KEY = "__MP_PUBLIC_KEY__"
+EMAIL_FROM = "__EMAIL_FROM__"
+CLOUDFLARE_EMAIL_ACCOUNT_ID = "__CLOUDFLARE_ACCOUNT_ID__"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+html_handling = "none"
+not_found_handling = "none"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "__D1_NAME__"
+database_id = "__D1_ID__"
+migrations_dir = "migrations"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true

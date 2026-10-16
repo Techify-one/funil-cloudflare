@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendas</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    .spinner { width: 14px; height: 14px; border: 2px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    table { border-collapse: separate; border-spacing: 0; }
+    thead th { position: sticky; top: 0; background: #0f1829; }
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .pill-success { background: rgba(34,197,94,.15); color: #4ade80; }
+    .pill-error { background: rgba(239,68,68,.15); color: #f87171; }
+    .pill-warn { background: rgba(234,179,8,.15); color: #facc15; }
+    .pill-info { background: rgba(56,189,248,.15); color: #38bdf8; }
+    .pill-muted { background: rgba(148,163,184,.15); color: #94a3b8; }
+
+    /* Timeline do histórico */
+    .timeline { position: relative; padding-left: 22px; }
+    .timeline::before {
+      content: ""; position: absolute; left: 7px; top: 6px; bottom: 6px; width: 2px;
+      background: linear-gradient(to bottom, #1e293b 0%, #334155 50%, #1e293b 100%);
+    }
+    .timeline-item { position: relative; padding-bottom: 14px; }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot {
+      position: absolute; left: -22px; top: 4px; width: 16px; height: 16px;
+      border-radius: 999px; background: #0b1220; display: grid; place-items: center;
+    }
+    .timeline-dot::after {
+      content: ""; width: 8px; height: 8px; border-radius: 999px; background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .timeline-dot.success { color: #4ade80; }
+    .timeline-dot.error   { color: #f87171; }
+    .timeline-dot.warn    { color: #facc15; }
+    .timeline-dot.info    { color: #38bdf8; }
+    .timeline-dot.muted   { color: #94a3b8; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-[1800px] mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-sky-600 grid place-items-center text-lg">💰</div>
+        <div>
+          <h1 class="text-lg font-semibold">Vendas</h1>
+          <p class="text-xs text-slate-400">Tentativas de checkout & vendas · Cloudflare D1</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="/painel"
+          class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition shadow-lg shadow-indigo-600/20"
+          title="Painel: todas as páginas">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Painel
+        </a>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <label class="inline-flex items-center gap-2 text-xs text-slate-300 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 cursor-pointer select-none">
+          <input id="hide-internal" type="checkbox" class="accent-sky-500" checked>
+          <span>Esconder Vendas de IPs de Teste</span>
+        </label>
+        <button id="refresh" class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-3 py-2 transition">
+          Atualizar
+        </button>
+
+        <!-- Engrenagem de configurações -->
+        <div class="relative">
+          <button id="settings-btn" type="button"
+            class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+            title="Configurações" aria-haspopup="true" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+          <div id="settings-menu"
+            class="hidden absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl shadow-black/50 overflow-hidden z-30"
+            role="menu">
+            <button id="open-blocked-ips" type="button"
+              class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-800 transition flex items-center gap-2.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>Editar IPs/blocos bloqueados</span>
+            </button>
+          </div>
+        </div>
+
+        <span id="status" class="text-xs text-slate-400 ml-2"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1800px] mx-auto px-4 py-6 space-y-6">
+    <section class="card p-5">
+      <div class="flex items-center justify-between mb-3 gap-3">
+        <h2 class="font-semibold shrink-0">Vendas recentes</h2>
+        <span id="recent-hint" class="text-xs text-slate-400 shrink-0">–</span>
+      </div>
+
+      <!-- Toolbar: busca + filtros + ações (uma linha no desktop) -->
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <!-- Busca -->
+        <div class="relative flex-1 min-w-[180px] basis-[200px]">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="search" type="search" placeholder="Buscar nome, e-mail, telefone…"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg text-sm pl-9 pr-9 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          <button id="search-clear" type="button"
+            class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 grid place-items-center"
+            title="Limpar pesquisa">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Status -->
+        <select id="filter-status" aria-label="Status" title="Status"
+          class="shrink-0 max-w-[180px] bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="">Todos os status</option>
+          <option value="comprou">Comprou</option>
+          <option value="pix_pendente">Pix gerado / pendente</option>
+          <option value="cartao_pendente">Cartão pendente</option>
+          <option value="reembolso_pendente">Reembolso em processamento</option>
+          <option value="reembolsado">Reembolsado</option>
+          <option value="rejeitado">Pagamento rejeitado</option>
+          <option value="checkout_falhou">Checkout falhou</option>
+          <option value="preencheu_dados">Preencheu dados</option>
+        </select>
+
+        <!-- Campanha (utm_campaign) -->
+        <select id="filter-campaign" aria-label="Campanha" title="Campanha (utm_campaign)"
+          class="shrink-0 max-w-[180px] bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="">Todas as campanhas</option>
+        </select>
+
+        <!-- Criativo (utm_term) -->
+        <select id="filter-term" aria-label="Criativo" title="Criativo (utm_term)"
+          class="shrink-0 max-w-[200px] bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="">Todos os criativos</option>
+        </select>
+
+        <!-- Funil -->
+        <select id="filter-funnel" aria-label="Funil" title="Funil"
+          class="shrink-0 max-w-[180px] bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="">Todos os funis</option>
+        </select>
+
+        <!-- Período -->
+        <select id="filter-period" aria-label="Período" title="Período"
+          class="shrink-0 bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="all">Todo o período</option>
+          <option value="today">Hoje</option>
+          <option value="yesterday">Ontem</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="30d">Últimos 30 dias</option>
+          <option value="custom">Personalizado…</option>
+        </select>
+
+        <!-- De / Até (só no período personalizado) -->
+        <input id="filter-start" type="date" aria-label="De" title="De"
+          class="shrink-0 hidden bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <input id="filter-end" type="date" aria-label="Até" title="Até"
+          class="shrink-0 hidden bg-slate-900 border border-slate-700 rounded-lg text-sm px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+
+        <!-- Ações -->
+        <button id="filter-clear" type="button"
+          class="shrink-0 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-3 py-2 transition whitespace-nowrap">
+          Limpar
+        </button>
+        <button id="export-csv" type="button"
+          class="shrink-0 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-3 py-2 transition whitespace-nowrap"
+          title="Exportar resultado filtrado em CSV">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span id="export-csv-label">Exportar CSV</span>
+        </button>
+      </div>
+      <div class="overflow-x-auto max-h-[640px] overflow-y-auto rounded-lg border border-slate-800">
+        <table class="w-full text-sm">
+          <thead class="text-left text-xs uppercase text-slate-400">
+            <tr>
+              <th class="px-3 py-2">ID</th>
+              <th class="px-3 py-2">Data e hora</th>
+              <th class="px-3 py-2">Nome</th>
+              <th class="px-3 py-2">Telefone</th>
+              <th class="px-3 py-2">Produto</th>
+              <th class="px-3 py-2">Método</th>
+              <th class="px-3 py-2">Valor final</th>
+              <th class="px-3 py-2">Status</th>
+              <th class="px-3 py-2 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="recent-body" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+      <div class="flex items-center justify-between gap-3 mt-3 flex-wrap text-sm">
+        <div class="flex items-center gap-2">
+          <label for="page-size" class="text-slate-400">Mostrar</label>
+          <select id="page-size" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+          <span class="text-slate-400">por página</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="page-info" class="text-slate-400">–</span>
+          <div class="flex items-center gap-1">
+            <button id="page-prev" type="button" class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition" title="Página anterior">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="page-next" type="button" class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition" title="Próxima página">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-500 pt-4 pb-10">
+      Dados em tempo real via Cloudflare D1 · <span id="footer-updated"></span>
+    </footer>
+  </main>
+
+  <!-- Modal: histórico da venda -->
+  <div id="modal-history" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-5xl w-full p-6 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-history-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-sky-500/15 grid place-items-center text-sky-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 id="modal-history-title" class="text-lg font-semibold">Histórico da venda</h3>
+          <p id="modal-history-sub" class="text-sm text-slate-400 mt-0.5 truncate">–</p>
+        </div>
+      </div>
+
+      <div id="modal-history-meta" class="hidden mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 text-xs"></div>
+
+      <div id="modal-history-body" class="mt-5 text-sm">
+        <div class="flex items-center gap-2 text-slate-400 py-6 justify-center">
+          <span class="spinner"></span> Carregando histórico…
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center gap-2 mt-6">
+        <button id="modal-history-copy"
+          class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg px-4 py-2 transition"
+          title="Copiar link direto desta venda">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          <span id="modal-history-copy-label">Copiar link</span>
+        </button>
+        <button id="modal-history-close"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu flutuante (três pontinhos) por linha -->
+  <div id="row-menu" class="hidden fixed z-[60] w-60 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl shadow-black/50 overflow-hidden text-sm" role="menu">
+    <button id="row-menu-dispatches" type="button"
+      class="w-full text-left px-4 py-2.5 hover:bg-slate-800 transition flex items-center gap-2.5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+      <span>Ver disparos enviados</span>
+    </button>
+    <button id="row-menu-resend" type="button"
+      class="w-full text-left px-4 py-2.5 hover:bg-slate-800 transition flex items-center gap-2.5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      <span>Reenviar e-mail de confirmação</span>
+    </button>
+    <button id="row-menu-refund" type="button"
+      class="w-full text-left px-4 py-2.5 border-t border-slate-800 hover:bg-red-950/50 transition flex items-center gap-2.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l3 2"></path></svg>
+      <span>Reembolsar no Mercado Pago</span>
+    </button>
+  </div>
+
+  <!-- Modal: disparos enviados (webhooks / e-mail) -->
+  <div id="modal-dispatch" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-dispatch-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-emerald-500/15 grid place-items-center text-emerald-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 id="modal-dispatch-title" class="text-lg font-semibold">Disparos enviados</h3>
+          <p id="modal-dispatch-sub" class="text-sm text-slate-400 mt-0.5 truncate">–</p>
+        </div>
+      </div>
+
+      <div id="modal-dispatch-msg" class="hidden mt-4"></div>
+
+      <div id="modal-dispatch-body" class="mt-5 text-sm">
+        <div class="flex items-center gap-2 text-slate-400 py-6 justify-center">
+          <span class="spinner"></span> Carregando disparos…
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center gap-2 mt-6">
+        <button id="modal-dispatch-resend"
+          class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          <span>Reenviar e-mail de confirmação</span>
+        </button>
+        <button id="modal-dispatch-close"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden"></div>
+
+  <!-- Modal: editar IPs/blocos bloqueados -->
+  <div id="modal-ips" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="card max-w-lg w-full p-6" role="dialog" aria-modal="true" aria-labelledby="modal-ips-title">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-full bg-sky-500/15 grid place-items-center text-sky-400 shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 id="modal-ips-title" class="text-lg font-semibold">IPs/blocos bloqueados</h3>
+          <p class="text-sm text-slate-400 mt-1">
+            Esses IPs/redes são ignorados nas estatísticas (filtro "Esconder Vendas de IPs de Teste").
+            Aceita IPv4 ou IPv6, IP único ou CIDR (ex.: <code class="text-slate-300">203.0.113.0/24</code>).
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2 max-h-64 overflow-y-auto pr-1" id="ips-list"></div>
+
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+        <input id="ips-input-value" type="text" placeholder="IP ou CIDR (ex.: 1.2.3.4 ou 2001:db8::/32)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <input id="ips-input-label" type="text" placeholder="Descrição (opcional)"
+          class="bg-slate-900 border border-slate-700 rounded-lg text-sm px-3 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <button id="ips-add" type="button"
+          class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Adicionar
+        </button>
+      </div>
+      <p id="modal-ips-error" class="text-sm text-red-400 mt-3 hidden"></p>
+      <p id="modal-ips-info" class="text-xs text-slate-500 mt-2">
+        IPv4: máscaras /8, /16, /24 ou /32. IPv6: múltiplos de /16 até /128.
+      </p>
+
+      <div class="flex justify-end gap-2 mt-6">
+        <button id="modal-ips-cancel"
+          class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Cancelar
+        </button>
+        <button id="modal-ips-save"
+          class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition inline-flex items-center gap-2">
+          <span id="modal-ips-save-label">Salvar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SETTINGS_API = "/dashboard/api/settings";
+    const HIDE_INTERNAL_KEY = "hide_internal_vendas";
+
+    function isHidingInternal() {
+      return document.getElementById("hide-internal").checked;
+    }
+
+    (function initHideInternal() {
+      const cb = document.getElementById("hide-internal");
+      const stored = localStorage.getItem(HIDE_INTERNAL_KEY);
+      if (stored !== null) cb.checked = stored === "1";
+      cb.addEventListener("change", () => {
+        localStorage.setItem(HIDE_INTERNAL_KEY, cb.checked ? "1" : "0");
+        salesState.offset = 0;
+        loadSales();
+      });
+    })();
+
+    function pillKindClass(kind) {
+      switch (kind) {
+        case "success": return "pill-success";
+        case "error":   return "pill-error";
+        case "warn":    return "pill-warn";
+        case "info":    return "pill-info";
+        default:        return "pill-muted";
+      }
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return "–";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return "–";
+      return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function fmtBRL(cents) {
+      if (cents == null || isNaN(cents)) return "–";
+      const v = Number(cents) / 100;
+      return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function setStatus(msg, loading = false) {
+      const el = document.getElementById("status");
+      el.innerHTML = loading ? `<span class="spinner"></span> ${escapeHtml(msg)}` : escapeHtml(msg);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function renderRecent(rows) {
+      const body = document.getElementById("recent-body");
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="9" class="px-3 py-6 text-center text-slate-500">Nenhuma venda encontrada.</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="px-3 py-2 text-slate-500 font-mono text-xs whitespace-nowrap">${escapeHtml(r.id)}</td>
+          <td class="px-3 py-2 text-slate-400 whitespace-nowrap">${escapeHtml(fmtDate(r.last_activity_at))}</td>
+          <td class="px-3 py-2 font-medium">${escapeHtml(r.name || "–")}</td>
+          <td class="px-3 py-2 text-slate-300 whitespace-nowrap font-mono text-xs">${escapeHtml(r.phone || "–")}</td>
+          <td class="px-3 py-2 text-slate-300">${escapeHtml(r.product_label || "–")}</td>
+          <td class="px-3 py-2 text-slate-300 whitespace-nowrap">${escapeHtml(r.method || "–")}</td>
+          <td class="px-3 py-2 text-slate-300 whitespace-nowrap">${escapeHtml(r.last_payment_amount_cents == null ? "Não registrado" : fmtBRL(r.last_payment_amount_cents))}${r.is_fake_checkout ? `<div class="text-xs text-amber-400">Valor simulado${r.value_source === "legacy_estimated" ? " · estimado" : ""} (sem receita)</div>` : ""}</td>
+          <td class="px-3 py-2"><span class="pill ${pillKindClass(r.derived_status_kind)}">${escapeHtml(r.derived_status_label || "–")}</span></td>
+          <td class="px-3 py-2 text-right">
+            <div class="inline-flex items-center justify-end gap-1">
+              <button class="btn-history-row inline-flex items-center justify-center w-8 h-8 rounded-lg bg-sky-600/15 hover:bg-sky-600 text-sky-400 hover:text-white transition"
+                data-id="${escapeHtml(r.id)}"
+                data-name="${escapeHtml(r.name || "")}"
+                data-email="${escapeHtml(r.email || "")}"
+                title="Ver histórico desta venda">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </button>
+              <button class="btn-menu-row inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700/40 hover:bg-slate-600 text-slate-300 hover:text-white transition"
+                data-id="${escapeHtml(r.id)}"
+                data-name="${escapeHtml(r.name || "")}"
+                data-phone="${escapeHtml(r.phone || "")}"
+                data-email="${escapeHtml(r.email || "")}"
+                data-product="${escapeHtml(r.product_label || "")}"
+                data-can-refund="${r.can_refund ? "1" : "0"}"
+                data-refund-amount="${r.refund_amount_cents == null ? "" : Number(r.refund_amount_cents)}"
+                data-refund-reason="${escapeHtml(r.refund_unavailable_reason || "")}"
+                title="Mais ações" aria-haspopup="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      body.querySelectorAll(".btn-history-row").forEach(btn => {
+        btn.addEventListener("click", () => openHistoryModal({
+          id: btn.dataset.id,
+          name: btn.dataset.name,
+          email: btn.dataset.email,
+        }));
+      });
+
+      body.querySelectorAll(".btn-menu-row").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openRowMenu(btn);
+        });
+      });
+    }
+
+    // ===== Modal: histórico da venda =====
+    const histModal = document.getElementById("modal-history");
+    const histTitle = document.getElementById("modal-history-title");
+    const histSub = document.getElementById("modal-history-sub");
+    const histMeta = document.getElementById("modal-history-meta");
+    const histBody = document.getElementById("modal-history-body");
+    const histClose = document.getElementById("modal-history-close");
+    let histAbort = null;
+
+    function metaItem(label, value) {
+      const raw = value == null ? "" : String(value);
+      const safe = escapeHtml(raw);
+      return `
+        <div class="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2" title="${safe}">
+          <div class="text-[10px] uppercase text-slate-500 tracking-wide">${escapeHtml(label)}</div>
+          <div class="text-sm text-slate-200 truncate">${safe || "–"}</div>
+        </div>
+      `;
+    }
+
+    function renderHistoryEvent(ev) {
+      const dotKind = ev.kind || "muted";
+      const detail = ev.detail
+        ? `<div class="text-xs text-slate-400 mt-0.5 break-words">${escapeHtml(ev.detail)}</div>`
+        : "";
+      const extra = ev.extra
+        ? `<div class="text-xs text-slate-500 mt-1 break-words font-mono">${escapeHtml(ev.extra)}</div>`
+        : "";
+      return `
+        <div class="timeline-item">
+          <span class="timeline-dot ${escapeHtml(dotKind)}"></span>
+          <div class="text-xs text-slate-400">${escapeHtml(fmtDate(ev.at))}</div>
+          <div class="text-sm font-medium text-slate-100 mt-0.5">${escapeHtml(ev.title)}</div>
+          ${detail}
+          ${extra}
+        </div>
+      `;
+    }
+
+    // Escreve/limpa o ?id=<lead> na URL pra permitir deep link de uma venda específica.
+    function setSaleParam(id) {
+      try {
+        const u = new URL(window.location.href);
+        if (id == null || id === "") u.searchParams.delete("id");
+        else u.searchParams.set("id", String(id));
+        history.replaceState(history.state, "", u);
+      } catch (_) { /* noop */ }
+    }
+
+    function openHistoryModal(lead) {
+      histTitle.textContent = "Histórico da venda";
+      histSub.textContent = `Lead #${lead.id}` + (lead.name ? ` · ${lead.name}` : "") + (lead.email ? ` · ${lead.email}` : "");
+      histMeta.classList.add("hidden");
+      histMeta.innerHTML = "";
+      histBody.innerHTML = '<div class="flex items-center gap-2 text-slate-400 py-6 justify-center"><span class="spinner"></span> Carregando histórico…</div>';
+      histModal.classList.remove("hidden");
+      histModal.classList.add("flex");
+      setSaleParam(lead.id);
+
+      if (histAbort) histAbort.abort();
+      histAbort = new AbortController();
+      fetch(`/dashboard/api/sales/${encodeURIComponent(lead.id)}/history`, {
+        credentials: "include",
+        cache: "no-store",
+        signal: histAbort.signal,
+      })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok || data.error) throw new Error(data.error || "Falha ao carregar histórico");
+          const lead = data.lead || {};
+          const events = Array.isArray(data.events) ? data.events : [];
+
+          // Atualiza o subtítulo com nome/e-mail vindos do banco (cobre deep link por URL)
+          histSub.textContent = `Lead #${lead.id}`
+            + (lead.name ? ` · ${lead.name}` : "")
+            + (lead.email ? ` · ${lead.email}` : "");
+
+          const metaParts = [];
+          if (lead.email) metaParts.push(metaItem("E-mail", lead.email));
+          if (lead.phone) metaParts.push(metaItem("Telefone", lead.phone));
+          if (data.product_label) metaParts.push(metaItem("Produto", data.product_label));
+          metaParts.push(metaItem(data.is_fake_checkout ? "Valor simulado (sem receita)" : "Valor", data.last_payment_amount_cents == null ? "Não registrado" : fmtBRL(data.last_payment_amount_cents)));
+          if (data.is_fake_checkout) metaParts.push(metaItem("Origem do valor", data.value_source === "legacy_estimated" ? "Reconstruído/estimado, preço atual, não histórico" : data.value_source === "fake_snapshot" ? "Snapshot do checkout fake" : "Não registrado"));
+          for (const bump of data.fake_order_bumps || []) metaParts.push(metaItem("Adicional simulado", bump.name + " · " + fmtBRL(bump.price_cents)));
+          if (lead.method) metaParts.push(metaItem("Método", lead.method));
+          if (lead.funnel) metaParts.push(metaItem("Funil", lead.funnel));
+          if (lead.utm_source) metaParts.push(metaItem("utm_source", lead.utm_source));
+          if (lead.utm_medium) metaParts.push(metaItem("utm_medium", lead.utm_medium));
+          if (lead.utm_campaign) metaParts.push(metaItem("Campanha (utm_campaign)", lead.utm_campaign));
+          if (lead.utm_content) metaParts.push(metaItem("Adset (utm_content)", lead.utm_content));
+          if (lead.utm_term) metaParts.push(metaItem("utm_term", lead.utm_term));
+          if (lead.utm_page) metaParts.push(metaItem("Página (utm_page)", lead.utm_page));
+          if (lead.meta_campaign_id) metaParts.push(metaItem("Meta campaign ID", lead.meta_campaign_id));
+          if (lead.meta_adset_id) metaParts.push(metaItem("Meta adset ID", lead.meta_adset_id));
+          if (lead.meta_ad_id) metaParts.push(metaItem("Meta ad ID", lead.meta_ad_id));
+          if (lead.fbclid) metaParts.push(metaItem("fbclid", lead.fbclid));
+          if (lead.ip) metaParts.push(metaItem("IP", lead.ip));
+          if (metaParts.length) {
+            histMeta.innerHTML = metaParts.join("");
+            histMeta.classList.remove("hidden");
+          }
+
+          if (!events.length) {
+            histBody.innerHTML = '<div class="text-sm text-slate-500 italic py-4 text-center">Sem eventos registrados.</div>';
+            return;
+          }
+          histBody.innerHTML = `<div class="timeline">${events.map(renderHistoryEvent).join("")}</div>`;
+        })
+        .catch(e => {
+          if (e.name === "AbortError") return;
+          histBody.innerHTML = `<div class="text-sm text-red-400 py-4 text-center">Erro: ${escapeHtml(e.message)}</div>`;
+        });
+    }
+
+    function closeHistoryModal() {
+      histModal.classList.add("hidden");
+      histModal.classList.remove("flex");
+      if (histAbort) histAbort.abort();
+      setSaleParam(null);
+    }
+
+    histClose.addEventListener("click", closeHistoryModal);
+    histModal.addEventListener("click", (e) => { if (e.target === histModal) closeHistoryModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !histModal.classList.contains("hidden")) closeHistoryModal();
+    });
+
+    // Copiar link direto da venda
+    const histCopyBtn = document.getElementById("modal-history-copy");
+    const histCopyLabel = document.getElementById("modal-history-copy-label");
+    histCopyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        histCopyLabel.textContent = "Link copiado!";
+      } catch (_) {
+        histCopyLabel.textContent = "Copie da barra de endereço";
+      }
+      setTimeout(() => { histCopyLabel.textContent = "Copiar link"; }, 1800);
+    });
+
+    // Abre direto a venda referenciada por ?id= na URL (deep link)
+    function openSaleFromUrl() {
+      try {
+        const id = new URL(window.location.href).searchParams.get("id");
+        if (id && /^\d+$/.test(id)) {
+          if (histModal.classList.contains("hidden")) openHistoryModal({ id });
+        } else if (!histModal.classList.contains("hidden")) {
+          closeHistoryModal();
+        }
+      } catch (_) { /* noop */ }
+    }
+    window.addEventListener("popstate", openSaleFromUrl);
+
+    // ===== Toast =====
+    let toastTimer = null;
+    function toast(msg, kind = "info", duration = 3200) {
+      const el = document.getElementById("toast");
+      const colors = {
+        info: "bg-slate-800 text-slate-100 border-slate-600",
+        success: "bg-emerald-600 text-white border-emerald-500",
+        warn: "bg-amber-600 text-white border-amber-500",
+        error: "bg-red-600 text-white border-red-500",
+      };
+      el.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] max-w-[90vw] px-4 py-2.5 rounded-lg border shadow-2xl shadow-black/40 text-sm font-medium flex items-center gap-2 " + (colors[kind] || colors.info);
+      el.innerHTML = (kind === "info" ? '<span class="spinner"></span>' : "") + " " + escapeHtml(msg);
+      el.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      if (duration > 0) toastTimer = setTimeout(() => el.classList.add("hidden"), duration);
+    }
+
+    // ===== Menu flutuante (três pontinhos) =====
+    const rowMenu = document.getElementById("row-menu");
+    const rowMenuRefundBtn = document.getElementById("row-menu-refund");
+    let rowMenuLead = null;
+
+    function openRowMenu(btn) {
+      rowMenuLead = {
+        id: btn.dataset.id,
+        name: btn.dataset.name || "",
+        phone: btn.dataset.phone || "",
+        email: btn.dataset.email || "",
+        product: btn.dataset.product || "",
+        canRefund: btn.dataset.canRefund === "1",
+        refundAmountCents: btn.dataset.refundAmount === "" ? null : Number(btn.dataset.refundAmount),
+        refundReason: btn.dataset.refundReason || "",
+      };
+      rowMenuRefundBtn.disabled = !rowMenuLead.canRefund;
+      rowMenuRefundBtn.title = rowMenuLead.canRefund
+        ? "Solicitar reembolso integral no Mercado Pago"
+        : (rowMenuLead.refundReason || "Reembolso indisponível para esta venda");
+      rowMenu.classList.remove("hidden");
+      const rect = btn.getBoundingClientRect();
+      const menuW = rowMenu.offsetWidth || 240;
+      const menuH = rowMenu.offsetHeight || 96;
+      let left = rect.right - menuW;
+      if (left < 8) left = 8;
+      let top = rect.bottom + 6;
+      if (top + menuH > window.innerHeight - 8) top = Math.max(8, rect.top - menuH - 6);
+      rowMenu.style.left = left + "px";
+      rowMenu.style.top = top + "px";
+    }
+    function closeRowMenu() { rowMenu.classList.add("hidden"); }
+
+    document.addEventListener("click", (e) => {
+      if (rowMenu.classList.contains("hidden")) return;
+      if (rowMenu.contains(e.target) || e.target.closest(".btn-menu-row")) return;
+      closeRowMenu();
+    });
+    window.addEventListener("scroll", closeRowMenu, true);
+    window.addEventListener("resize", closeRowMenu);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRowMenu(); });
+
+    document.getElementById("row-menu-dispatches").addEventListener("click", () => {
+      const lead = rowMenuLead; closeRowMenu();
+      if (lead) openDispatchModal(lead);
+    });
+    document.getElementById("row-menu-resend").addEventListener("click", () => {
+      const lead = rowMenuLead; closeRowMenu();
+      if (lead) resendEmail(lead);
+    });
+    rowMenuRefundBtn.addEventListener("click", () => {
+      const lead = rowMenuLead; closeRowMenu();
+      if (lead && lead.canRefund) refundSale(lead);
+    });
+
+    // ===== Modal: disparos enviados =====
+    const dispModal = document.getElementById("modal-dispatch");
+    const dispSub = document.getElementById("modal-dispatch-sub");
+    const dispMsg = document.getElementById("modal-dispatch-msg");
+    const dispBody = document.getElementById("modal-dispatch-body");
+    const dispResendBtn = document.getElementById("modal-dispatch-resend");
+    const dispCloseBtn = document.getElementById("modal-dispatch-close");
+    let dispAbort = null;
+    let dispCurrentLead = null;
+
+    function dispatchChannelLabel(ch) {
+      return { email: "E-mail", capi: "Meta CAPI (Purchase)" }[ch] || ch;
+    }
+    function dispatchStatusPill(s) {
+      if (s === "sent")    return '<span class="pill pill-success">enviado</span>';
+      if (s === "failed")  return '<span class="pill pill-error">falhou</span>';
+      if (s === "skipped") return '<span class="pill pill-warn">pulado</span>';
+      return `<span class="pill pill-muted">${escapeHtml(s || "–")}</span>`;
+    }
+    function renderDispatchRow(d) {
+      const origin = d.triggered_by === "manual" ? "reenvio manual" : "automático (na compra)";
+      const dest = d.destination ? ` · ${escapeHtml(d.destination)}` : "";
+      const err = d.error ? `<div class="text-xs text-red-400 mt-1 break-words font-mono">${escapeHtml(d.error)}</div>` : "";
+      return `
+        <div class="border border-slate-700 rounded-lg px-3 py-2.5 bg-slate-900/40">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-slate-100">${escapeHtml(dispatchChannelLabel(d.channel))}</span>
+              ${dispatchStatusPill(d.status)}
+            </div>
+            <div class="text-xs text-slate-400">${escapeHtml(fmtDate(d.created_at))}</div>
+          </div>
+          <div class="text-xs text-slate-400 mt-0.5">${escapeHtml(origin)}${dest}</div>
+          ${err}
+        </div>`;
+    }
+
+    function openDispatchModal(lead) {
+      dispCurrentLead = lead;
+      dispSub.textContent = `Lead #${lead.id}` + (lead.name ? ` · ${lead.name}` : "");
+      dispMsg.classList.add("hidden");
+      dispMsg.innerHTML = "";
+      dispBody.innerHTML = '<div class="flex items-center gap-2 text-slate-400 py-6 justify-center"><span class="spinner"></span> Carregando disparos…</div>';
+      dispResendBtn.disabled = true;
+      dispModal.classList.remove("hidden");
+      dispModal.classList.add("flex");
+
+      if (dispAbort) dispAbort.abort();
+      dispAbort = new AbortController();
+      fetch(`/dashboard/api/sales/${encodeURIComponent(lead.id)}/dispatches`, {
+        credentials: "include", cache: "no-store", signal: dispAbort.signal,
+      })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok || data.error) throw new Error(data.error || "Falha ao carregar disparos");
+          dispCurrentLead = { id: data.lead.id, name: data.lead.name || "", email: data.lead.email || "", phone: data.lead.phone || "" };
+          dispSub.textContent = `Lead #${data.lead.id}`
+            + (data.lead.name ? ` · ${data.lead.name}` : "")
+            + (data.lead.phone ? ` · ${data.lead.phone}` : "");
+
+          if (data.offer) {
+            dispMsg.innerHTML = `
+              <div class="text-[10px] uppercase text-slate-500 tracking-wide mb-1">E-mail de confirmação da oferta${data.offer.email_enabled ? "" : " (desabilitado na oferta)"}</div>
+              <div class="bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 whitespace-pre-wrap break-words">${escapeHtml(data.offer.email_subject || "(assunto padrão)")}</div>`;
+            dispMsg.classList.remove("hidden");
+          }
+
+          dispResendBtn.disabled = !data.can_resend;
+          dispResendBtn.title = data.can_resend
+            ? "Reenviar o e-mail de confirmação agora"
+            : "Sem compra aprovada, sem e-mail do comprador ou e-mail desligado na oferta";
+
+          const list = data.dispatches || [];
+          if (!list.length) {
+            dispBody.innerHTML = '<div class="text-sm text-slate-500 italic py-4 text-center">Nenhum disparo registrado ainda.<br>O log começa a partir de agora; vendas antigas não têm histórico.</div>';
+            return;
+          }
+          dispBody.innerHTML = `<div class="space-y-2">${list.map(renderDispatchRow).join("")}</div>`;
+        })
+        .catch(e => {
+          if (e.name === "AbortError") return;
+          dispBody.innerHTML = `<div class="text-sm text-red-400 py-4 text-center">Erro: ${escapeHtml(e.message)}</div>`;
+        });
+    }
+    function closeDispatchModal() {
+      dispModal.classList.add("hidden");
+      dispModal.classList.remove("flex");
+      if (dispAbort) dispAbort.abort();
+    }
+    dispCloseBtn.addEventListener("click", closeDispatchModal);
+    dispModal.addEventListener("click", (e) => { if (e.target === dispModal) closeDispatchModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !dispModal.classList.contains("hidden")) closeDispatchModal();
+    });
+    dispResendBtn.addEventListener("click", () => {
+      if (dispCurrentLead) resendEmail(dispCurrentLead, true);
+    });
+
+    // ===== Reenvio do e-mail de confirmação =====
+    let resending = false;
+    async function resendEmail(lead, fromModal = false) {
+      if (resending) return;
+      const emailTxt = lead.email ? ` para ${lead.email}` : "";
+      if (!confirm(`Reenviar o e-mail de confirmação${emailTxt}?`)) return;
+      resending = true;
+      if (fromModal) dispResendBtn.disabled = true;
+      toast("Reenviando e-mail…", "info", 0);
+      try {
+        const r = await fetch(`/dashboard/api/sales/${encodeURIComponent(lead.id)}/resend-email`, {
+          method: "POST", credentials: "include", cache: "no-store",
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data.error || data.ok === false) {
+          throw new Error(data.message || data.error || `Falha (HTTP ${r.status})`);
+        }
+        toast(`E-mail reenviado${data.destination ? " para " + data.destination : ""} ✓`, "success");
+        if (fromModal && dispCurrentLead && String(dispCurrentLead.id) === String(lead.id)) {
+          openDispatchModal(dispCurrentLead);
+        }
+      } catch (e) {
+        toast("Erro ao reenviar: " + e.message, "error", 5000);
+      } finally {
+        resending = false;
+        if (fromModal) dispResendBtn.disabled = false;
+      }
+    }
+
+    // ===== Reembolso integral no Mercado Pago =====
+    let refunding = false;
+    async function refundSale(lead) {
+      if (refunding || !lead || !lead.canRefund) return;
+      const who = lead.name ? ` de ${lead.name}` : "";
+      const product = lead.product ? `\nProduto: ${lead.product}` : "";
+      const amount = lead.refundAmountCents != null ? `\nValor integral: ${fmtBRL(lead.refundAmountCents)}` : "";
+      const confirmed = confirm(
+        `Confirma o reembolso integral da compra${who}?${product}${amount}\n\n` +
+        "O pedido será enviado agora ao Mercado Pago. Esta ação não pode ser desfeita."
+      );
+      if (!confirmed) return;
+
+      refunding = true;
+      toast("Enviando reembolso ao Mercado Pago…", "info", 0);
+      try {
+        const r = await fetch(`/dashboard/api/sales/${encodeURIComponent(lead.id)}/refund`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify({ operation_id: crypto.randomUUID() }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data.error || data.ok === false) {
+          throw new Error(data.message || data.error || `Falha (HTTP ${r.status})`);
+        }
+
+        if (data.processing) {
+          toast("Reembolso aceito e em processamento no Mercado Pago.", "warn", 5000);
+        } else if (data.already_refunded) {
+          toast("A compra já estava reembolsada no Mercado Pago ✓", "success", 5000);
+        } else {
+          const refundedAmount = data.amount_cents != null ? ` (${fmtBRL(data.amount_cents)})` : "";
+          toast(`Reembolso aprovado no Mercado Pago${refundedAmount} ✓`, "success", 5000);
+        }
+        await loadSales();
+      } catch (e) {
+        toast("Erro ao reembolsar: " + e.message, "error", 6500);
+      } finally {
+        refunding = false;
+      }
+    }
+
+    // ===== Pesquisa, filtros e paginação de vendas =====
+    const searchEl = document.getElementById("search");
+    const searchClearEl = document.getElementById("search-clear");
+    const recentHintEl = document.getElementById("recent-hint");
+    const pageSizeEl = document.getElementById("page-size");
+    const pagePrevEl = document.getElementById("page-prev");
+    const pageNextEl = document.getElementById("page-next");
+    const pageInfoEl = document.getElementById("page-info");
+    const filterStatusEl = document.getElementById("filter-status");
+    const filterCampaignEl = document.getElementById("filter-campaign");
+    const filterTermEl = document.getElementById("filter-term");
+    const filterFunnelEl = document.getElementById("filter-funnel");
+    const filterPeriodEl = document.getElementById("filter-period");
+    const filterStartEl = document.getElementById("filter-start");
+    const filterEndEl = document.getElementById("filter-end");
+    const filterClearEl = document.getElementById("filter-clear");
+    const exportBtnEl = document.getElementById("export-csv");
+    const exportLabelEl = document.getElementById("export-csv-label");
+    let searchTimer = null;
+    let searchAbort = null;
+
+    const salesState = { limit: 50, offset: 0, total: 0, q: "" };
+
+    function currentQuery() {
+      return searchEl.value.trim();
+    }
+
+    // Data de Brasília (UTC-3), N dias atrás, no formato YYYY-MM-DD.
+    function brtDay(daysAgo) {
+      const d = new Date(Date.now() - 3 * 3600 * 1000 - daysAgo * 86400 * 1000);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      return y + "-" + m + "-" + day;
+    }
+
+    // Resolve {start, end} do filtro de período. Presets usam dias-calendário de
+    // Brasília com offset -03:00 (o D1 guarda timestamps em UTC). "all" → sem corte;
+    // "custom" → lê os campos De/Até. Retorna ISO com offset pra casar com o backend.
+    function resolvePeriod() {
+      const p = filterPeriodEl.value;
+      const s = (dateStr) => dateStr + "T00:00:00-03:00";
+      const e = (dateStr) => dateStr + "T23:59:59-03:00";
+      switch (p) {
+        case "today":     return { start: s(brtDay(0)),  end: e(brtDay(0)) };
+        case "yesterday": return { start: s(brtDay(1)),  end: e(brtDay(1)) };
+        case "7d":        return { start: s(brtDay(6)),  end: e(brtDay(0)) };
+        case "30d":       return { start: s(brtDay(29)), end: e(brtDay(0)) };
+        case "custom":    return {
+          start: filterStartEl.value ? s(filterStartEl.value) : null,
+          end:   filterEndEl.value   ? e(filterEndEl.value)   : null,
+        };
+        default:          return { start: null, end: null }; // "all"
+      }
+    }
+
+    function buildFilterParams() {
+      const params = new URLSearchParams();
+      const q = currentQuery();
+      if (q) params.set("q", q);
+      if (filterStatusEl.value) params.set("status", filterStatusEl.value);
+      if (filterCampaignEl.value) params.set("utm_campaign", filterCampaignEl.value);
+      if (filterTermEl.value) params.set("utm_term", filterTermEl.value);
+      if (filterFunnelEl.value) params.set("funnel", filterFunnelEl.value);
+      const { start, end } = resolvePeriod();
+      if (start) params.set("start", start);
+      if (end) params.set("end", end);
+      if (!isHidingInternal()) params.set("include_internal", "1");
+      return params;
+    }
+
+    // Popula os dropdowns de UTM/atribuição (campanha, criativo, funil).
+    async function loadFacets() {
+      const map = [
+        { key: "utm_campaign", el: filterCampaignEl, allLabel: "Todas as campanhas" },
+        { key: "utm_term",     el: filterTermEl,     allLabel: "Todos os criativos" },
+        { key: "funnel",       el: filterFunnelEl,   allLabel: "Todos os funis" },
+      ];
+      try {
+        const r = await fetch("/dashboard/api/sales/facets", { cache: "no-store", credentials: "include" });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        const facets = data.facets || {};
+        for (const { key, el, allLabel } of map) {
+          const f = facets[key] || { values: [], none: 0 };
+          const current = el.value;
+          const opts = [`<option value="">${allLabel}</option>`];
+          for (const item of (f.values || [])) {
+            opts.push(`<option value="${escapeHtml(item.value)}">${escapeHtml(item.value)} (${escapeHtml(item.count)})</option>`);
+          }
+          if (f.none > 0) {
+            opts.push(`<option value="__none__">(sem valor) (${escapeHtml(f.none)})</option>`);
+          }
+          el.innerHTML = opts.join("");
+          if (current) el.value = current;
+        }
+      } catch (e) {
+        // silencioso, dropdowns seguem só com "Todos"
+      }
+    }
+
+    function hasActiveFilter() {
+      const { start, end } = resolvePeriod();
+      return !!(
+        currentQuery() ||
+        filterStatusEl.value ||
+        filterCampaignEl.value ||
+        filterTermEl.value ||
+        filterFunnelEl.value ||
+        start || end
+      );
+    }
+
+    function updatePaginationUI() {
+      const { offset, limit, total } = salesState;
+      const start = total === 0 ? 0 : offset + 1;
+      const end = Math.min(offset + limit, total);
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const currentPage = total === 0 ? 1 : Math.floor(offset / limit) + 1;
+      const filtered = hasActiveFilter();
+
+      if (filtered) {
+        recentHintEl.innerHTML = total === 0
+          ? '<span class="text-amber-400">Nenhum resultado</span> · filtrado'
+          : `${start}–${end} de <span class="text-amber-400 font-semibold">${total}</span> filtrado${total === 1 ? "" : "s"}`;
+      } else {
+        recentHintEl.textContent = total === 0
+          ? "Nenhuma venda"
+          : `${start}–${end} de ${total}`;
+      }
+
+      pageInfoEl.textContent = total === 0 ? "–" : `Página ${currentPage} de ${totalPages}`;
+      pagePrevEl.disabled = offset === 0;
+      pageNextEl.disabled = offset + limit >= total;
+
+      // Atualiza o contador no botão de export
+      const baseLabel = filtered ? "Exportar CSV" : "Exportar CSV";
+      exportLabelEl.textContent = total > 0
+        ? `${baseLabel} (${total.toLocaleString("pt-BR")})`
+        : baseLabel;
+    }
+
+    async function loadSales() {
+      const q = currentQuery();
+      salesState.q = q;
+      searchClearEl.classList.toggle("hidden", q.length === 0);
+
+      if (searchAbort) searchAbort.abort();
+      searchAbort = new AbortController();
+
+      recentHintEl.innerHTML = '<span class="spinner"></span> ' + (q ? "pesquisando…" : "carregando…");
+      try {
+        const params = buildFilterParams();
+        params.set("limit", String(salesState.limit));
+        params.set("offset", String(salesState.offset));
+        const r = await fetch(`/dashboard/api/sales/search?${params.toString()}`, {
+          credentials: "include",
+          cache: "no-store",
+          signal: searchAbort.signal,
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+
+        salesState.total = Number(data.total) || 0;
+
+        if (salesState.offset > 0 && salesState.offset >= salesState.total) {
+          const pages = Math.max(1, Math.ceil(salesState.total / salesState.limit));
+          salesState.offset = (pages - 1) * salesState.limit;
+          await loadSales();
+          return;
+        }
+
+        renderRecent(data.results || []);
+        updatePaginationUI();
+        document.getElementById("footer-updated").textContent = "atualizado em " + new Date().toLocaleString("pt-BR");
+      } catch (e) {
+        if (e.name === "AbortError") return;
+        recentHintEl.textContent = "Erro: " + e.message;
+      }
+    }
+
+    searchEl.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        salesState.offset = 0;
+        loadSales();
+      }, 250);
+    });
+    searchClearEl.addEventListener("click", () => {
+      searchEl.value = "";
+      searchEl.focus();
+      salesState.offset = 0;
+      loadSales();
+    });
+
+    pageSizeEl.addEventListener("change", () => {
+      const n = parseInt(pageSizeEl.value, 10) || 50;
+      salesState.limit = Math.min(Math.max(n, 1), 200);
+      salesState.offset = 0;
+      loadSales();
+    });
+
+    pagePrevEl.addEventListener("click", () => {
+      if (salesState.offset === 0) return;
+      salesState.offset = Math.max(0, salesState.offset - salesState.limit);
+      loadSales();
+    });
+
+    pageNextEl.addEventListener("click", () => {
+      if (salesState.offset + salesState.limit >= salesState.total) return;
+      salesState.offset += salesState.limit;
+      loadSales();
+    });
+
+    document.getElementById("refresh").addEventListener("click", () => {
+      loadSales();
+      loadFacets();
+    });
+
+    // Mostra os campos De/Até só no período "Personalizado".
+    function syncPeriodInputs() {
+      const custom = filterPeriodEl.value === "custom";
+      filterStartEl.classList.toggle("hidden", !custom);
+      filterEndEl.classList.toggle("hidden", !custom);
+    }
+
+    // Filtros: status, campanha, criativo, funil
+    [filterStatusEl, filterCampaignEl, filterTermEl, filterFunnelEl].forEach(el => {
+      el.addEventListener("change", () => {
+        salesState.offset = 0;
+        loadSales();
+      });
+    });
+    // Período: presets recarregam na hora; "Personalizado" só recarrega quando há datas.
+    filterPeriodEl.addEventListener("change", () => {
+      syncPeriodInputs();
+      salesState.offset = 0;
+      if (filterPeriodEl.value === "custom" && !filterStartEl.value && !filterEndEl.value) return;
+      loadSales();
+    });
+    [filterStartEl, filterEndEl].forEach(el => {
+      el.addEventListener("change", () => {
+        salesState.offset = 0;
+        loadSales();
+      });
+    });
+    filterClearEl.addEventListener("click", () => {
+      filterStatusEl.value = "";
+      filterCampaignEl.value = "";
+      filterTermEl.value = "";
+      filterFunnelEl.value = "";
+      filterPeriodEl.value = "all";
+      filterStartEl.value = "";
+      filterEndEl.value = "";
+      syncPeriodInputs();
+      salesState.offset = 0;
+      loadSales();
+    });
+
+    // Export CSV, usa os mesmos filtros atuais
+    exportBtnEl.addEventListener("click", async () => {
+      const originalLabel = exportLabelEl.textContent;
+      exportBtnEl.disabled = true;
+      exportLabelEl.innerHTML = '<span class="spinner"></span> Exportando…';
+      try {
+        const params = buildFilterParams();
+        const r = await fetch(`/dashboard/api/sales/export?${params.toString()}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!r.ok) {
+          const txt = await r.text().catch(() => "");
+          throw new Error(`HTTP ${r.status}${txt ? ": " + txt.slice(0, 200) : ""}`);
+        }
+        const blob = await r.blob();
+        const cd = r.headers.get("Content-Disposition") || "";
+        const m = cd.match(/filename="([^"]+)"/);
+        const filename = m ? m[1] : `vendas-${new Date().toISOString().slice(0,10)}.csv`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Erro ao exportar: " + e.message);
+      } finally {
+        exportBtnEl.disabled = false;
+        exportLabelEl.textContent = originalLabel;
+      }
+    });
+
+    // ===== Engrenagem (menu de configurações) =====
+    const settingsBtn = document.getElementById("settings-btn");
+    const settingsMenu = document.getElementById("settings-menu");
+
+    function toggleSettingsMenu(force) {
+      const willOpen = typeof force === "boolean" ? force : settingsMenu.classList.contains("hidden");
+      settingsMenu.classList.toggle("hidden", !willOpen);
+      settingsBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    }
+    settingsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSettingsMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (settingsMenu.classList.contains("hidden")) return;
+      if (settingsMenu.contains(e.target) || e.target === settingsBtn || settingsBtn.contains(e.target)) return;
+      toggleSettingsMenu(false);
+    });
+
+    // ===== Modal: IPs/blocos bloqueados =====
+    const ipsModal = document.getElementById("modal-ips");
+    const ipsList = document.getElementById("ips-list");
+    const ipsInputValue = document.getElementById("ips-input-value");
+    const ipsInputLabel = document.getElementById("ips-input-label");
+    const ipsAddBtn = document.getElementById("ips-add");
+    const ipsCancelBtn = document.getElementById("modal-ips-cancel");
+    const ipsSaveBtn = document.getElementById("modal-ips-save");
+    const ipsSaveLabel = document.getElementById("modal-ips-save-label");
+    const ipsErrorEl = document.getElementById("modal-ips-error");
+
+    let ipsDraft = [];
+
+    function ipsShowError(msg) {
+      ipsErrorEl.textContent = msg;
+      ipsErrorEl.classList.toggle("hidden", !msg);
+    }
+
+    function renderIpsList() {
+      if (!ipsDraft.length) {
+        ipsList.innerHTML = '<p class="text-sm text-slate-500 italic px-2 py-3">Nenhum IP/bloco cadastrado.</p>';
+        return;
+      }
+      ipsList.innerHTML = ipsDraft.map((e, i) => `
+        <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-2">
+          <div class="flex-1 min-w-0">
+            <div class="font-mono text-sm text-sky-300 truncate">${escapeHtml(e.value)}</div>
+            ${e.label ? `<div class="text-xs text-slate-400 truncate">${escapeHtml(e.label)}</div>` : ""}
+          </div>
+          <button type="button" data-idx="${i}" class="ip-remove inline-flex items-center justify-center w-8 h-8 rounded-md bg-red-600/15 hover:bg-red-600 text-red-400 hover:text-white transition shrink-0" title="Remover">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      `).join("");
+      ipsList.querySelectorAll(".ip-remove").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          ipsDraft.splice(idx, 1);
+          renderIpsList();
+        });
+      });
+    }
+
+    function validateIpEntryClient(input) {
+      const v = (input || "").trim();
+      if (!v) return { ok: false, reason: "Valor vazio" };
+      if (!/^[0-9a-fA-F.:*/]+$/.test(v)) return { ok: false, reason: "Caracteres inválidos" };
+      if (!v.includes("/")) {
+        if (!(v.includes(".") || v.includes(":"))) return { ok: false, reason: "Formato não reconhecido" };
+        return { ok: true, value: v };
+      }
+      const [addr, prefStr] = v.split("/");
+      const prefix = parseInt(prefStr, 10);
+      if (!Number.isFinite(prefix) || prefix < 0) return { ok: false, reason: "CIDR inválido" };
+      if (addr.includes(".") && !addr.includes(":")) {
+        if (![8, 16, 24, 32].includes(prefix)) return { ok: false, reason: "IPv4 aceita /8, /16, /24 ou /32" };
+        if (addr.split(".").length !== 4) return { ok: false, reason: "IPv4 inválido" };
+        return { ok: true, value: v };
+      }
+      if (addr.includes(":")) {
+        if (prefix === 128) return { ok: true, value: v };
+        if (prefix % 16 !== 0 || prefix < 16 || prefix > 112) return { ok: false, reason: "IPv6 aceita múltiplos de /16 até /128" };
+        return { ok: true, value: v };
+      }
+      return { ok: false, reason: "Formato não reconhecido" };
+    }
+
+    function ipsAdd() {
+      ipsShowError("");
+      const v = validateIpEntryClient(ipsInputValue.value);
+      if (!v.ok) { ipsShowError(v.reason); return; }
+      if (ipsDraft.some(e => e.value === v.value)) { ipsShowError("Entrada duplicada"); return; }
+      ipsDraft.push({ value: v.value, label: ipsInputLabel.value.trim().slice(0, 80) });
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      ipsInputValue.focus();
+      renderIpsList();
+    }
+
+    ipsAddBtn.addEventListener("click", ipsAdd);
+    ipsInputValue.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+    ipsInputLabel.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); ipsAdd(); } });
+
+    function openIpsModal(initial) {
+      ipsDraft = (initial || []).map(e => ({ value: e.value, label: e.label || "" }));
+      ipsShowError("");
+      ipsInputValue.value = "";
+      ipsInputLabel.value = "";
+      renderIpsList();
+      ipsSaveBtn.disabled = false;
+      ipsCancelBtn.disabled = false;
+      ipsSaveLabel.textContent = "Salvar";
+      ipsModal.classList.remove("hidden");
+      ipsModal.classList.add("flex");
+      setTimeout(() => ipsInputValue.focus(), 50);
+    }
+    function closeIpsModal() {
+      ipsModal.classList.add("hidden");
+      ipsModal.classList.remove("flex");
+    }
+
+    document.getElementById("open-blocked-ips").addEventListener("click", async () => {
+      toggleSettingsMenu(false);
+      try {
+        const r = await fetch(SETTINGS_API, { cache: "no-store", credentials: "include" });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        openIpsModal(data.blocked_ips || []);
+      } catch (e) {
+        openIpsModal([]);
+        ipsShowError("Não foi possível carregar a lista atual: " + e.message);
+      }
+    });
+
+    ipsCancelBtn.addEventListener("click", closeIpsModal);
+    ipsModal.addEventListener("click", (e) => { if (e.target === ipsModal) closeIpsModal(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !ipsModal.classList.contains("hidden")) closeIpsModal();
+    });
+
+    ipsSaveBtn.addEventListener("click", async () => {
+      ipsShowError("");
+      ipsSaveBtn.disabled = true;
+      ipsCancelBtn.disabled = true;
+      ipsSaveLabel.innerHTML = '<span class="spinner"></span> Salvando…';
+      try {
+        const r = await fetch(SETTINGS_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ key: "blocked_ips", value: ipsDraft }),
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || `HTTP ${r.status}`);
+        closeIpsModal();
+        setStatus("Lista de IPs atualizada");
+        loadSales();
+      } catch (e) {
+        ipsShowError("Erro: " + e.message);
+        ipsSaveBtn.disabled = false;
+        ipsCancelBtn.disabled = false;
+        ipsSaveLabel.textContent = "Tentar novamente";
+      }
+    });
+
+    syncPeriodInputs();
+    loadSales();
+    loadFacets();
+    openSaleFromUrl();
+    setInterval(loadSales, 60_000);
+  </script>
+</body>
+</html>

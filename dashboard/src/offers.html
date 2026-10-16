@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ofertas · __BRAND_NAME__</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%B7%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    thead th { position: sticky; top: 0; background: #0f1829; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; padding: 10px 12px; border-bottom: 1px solid #1f2a44; white-space: nowrap; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(31,42,68,.6); font-size: 13px; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(30,41,59,.35); }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .pill-active   { background: rgba(34,197,94,.15); color: #4ade80; }
+    .pill-inactive { background: rgba(148,163,184,.15); color: #94a3b8; }
+    .pill-oos      { background: rgba(244,63,94,.15); color: #fb7185; }
+    .pill-mail     { background: rgba(16,185,129,.15); color: #34d399; }
+    .toggle { position: relative; display: inline-block; width: 38px; height: 22px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #334155; border-radius: 999px; transition: .2s; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; top: 3px; background: #e5e7eb; border-radius: 50%; transition: .2s; }
+    input:checked + .slider { background: #22c55e; }
+    input:checked + .slider:before { transform: translateX(16px); }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #1f2a44; color: #e5e7eb; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+    .toast.show { opacity: 1; }
+    .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; transition: background .15s, color .15s; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(2, 6, 23, .7); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .modal { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; }
+    .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; }
+    .field-input, .field-select, .field-textarea {
+      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      color: #e5e7eb; padding: 8px 10px; font-size: 13px;
+    }
+    .field-textarea { resize: vertical; min-height: 90px; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .field-input:focus, .field-select:focus, .field-textarea:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.25); }
+    .field-help { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .price-old { text-decoration: line-through; color: #64748b; font-size: 11px; }
+    .price-new { color: #4ade80; font-weight: 600; }
+    .bump-editor { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px; }
+    .bump-row { border: 1px solid #334155; border-radius: 10px; padding: 10px; background: rgba(15,23,42,.7); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-pink-600 grid place-items-center text-lg">🏷️</div>
+        <div>
+          <h1 class="text-lg font-semibold">Ofertas</h1>
+          <p class="text-xs text-slate-400">Gerencia as ofertas do checkout (preço, estoque, e-mail de confirmação)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btn-refresh"
+          class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg px-3 py-2 transition" title="Atualizar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </button>
+        <button id="btn-new"
+          class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Nova oferta
+        </button>
+        <a href="/painel"
+          class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Painel
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-4">
+    <div class="card p-4 text-sm text-slate-300">
+      <div class="flex items-start gap-3">
+        <span class="text-2xl">💡</span>
+        <div class="flex-1">
+          <p>Cada oferta vira a página <span class="mono text-sky-300">/checkout/&lt;code&gt;</span>. O <b>code</b> é o slug usado na URL, alterar quebra links já distribuídos. <b>Preços</b> estão em centavos no banco, mas aqui você edita em reais.</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Code / Nome</th>
+              <th>Preços</th>
+              <th>E-mail</th>
+              <th>Ativo</th>
+              <th class="text-right pr-4">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="hidden px-4 py-8 text-center text-sm text-slate-500">Nenhuma oferta cadastrada.</div>
+      <div id="loading" class="px-4 py-8 text-center text-sm text-slate-500">Carregando…</div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-500 pt-2 pb-10">
+      <span data-host></span> · Cloudflare Workers · <span id="count">–</span>
+    </footer>
+    <script>document.querySelectorAll("[data-host]").forEach(function (el) { el.textContent = location.host; });</script>
+  </main>
+
+  <div id="toast" class="toast">–</div>
+
+  <div id="modal" class="modal-backdrop hidden">
+    <div class="modal p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="modal-title" class="text-base font-semibold">Nova oferta</h2>
+        <button id="modal-close" class="text-slate-400 hover:text-white" title="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="form" class="space-y-3">
+        <input type="hidden" id="f-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="f-code" class="field-label">Code (slug)</label>
+            <input id="f-code" type="text" class="field-input mt-1 mono" maxlength="64" required placeholder="ex.: produto-10" pattern="[a-z0-9-]+" />
+            <p class="field-help">Letras minúsculas, números e hífen. URL fica /checkout/&lt;code&gt;.</p>
+          </div>
+          <div>
+            <label for="f-name" class="field-label">Nome</label>
+            <input id="f-name" type="text" class="field-input mt-1" maxlength="120" required placeholder="Ex.: Produto, Plano Anual" />
+          </div>
+        </div>
+        <div>
+          <label for="f-description" class="field-label">Descrição (opcional)</label>
+          <textarea id="f-description" class="field-textarea mt-1" maxlength="500" placeholder="Breve descrição da oferta"></textarea>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="f-anchor" class="field-label">Preço de âncora (R$)</label>
+            <input id="f-anchor" type="number" class="field-input mt-1" min="0" step="0.01" placeholder="297.00" />
+            <p class="field-help">Preço riscado (de). Deixe 0 se não tiver.</p>
+          </div>
+          <div>
+            <label for="f-sale" class="field-label">Preço de venda (R$)</label>
+            <input id="f-sale" type="number" class="field-input mt-1" min="0" step="0.01" required placeholder="97.00" />
+            <p class="field-help">Preço cobrado (por).</p>
+          </div>
+        </div>
+        <div class="bump-editor space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-emerald-300">Order bumps</div>
+              <p class="field-help">Ofertas adicionais exibidas com checkbox no checkout. O servidor recalcula o total.</p>
+            </div>
+            <button type="button" id="btn-add-bump" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg px-3 py-2 transition">+ Adicionar</button>
+          </div>
+          <div id="f-order-bumps" class="space-y-2"></div>
+          <div id="f-order-bumps-empty" class="text-xs text-slate-500">Nenhum order bump configurado.</div>
+        </div>
+        <div>
+          <label for="f-email-subject" class="field-label">Assunto do e-mail</label>
+          <input id="f-email-subject" type="text" class="field-input mt-1" maxlength="200" placeholder="Sua compra foi confirmada" />
+          <p class="field-help">E-mail de confirmação (pós-compra). Só é enviado quando "Enviar e-mail" está ativo.</p>
+        </div>
+        <div>
+          <label for="f-email-body" class="field-label">Corpo do e-mail</label>
+          <textarea id="f-email-body" class="field-textarea mt-1" maxlength="4000" placeholder="Texto enviado ao comprador logo após a compra"></textarea>
+          <p class="field-help">Use {{nome}} e {{produto}}. Se vazio, usa um texto padrão.</p>
+        </div>
+        <div>
+          <label for="f-email-access-url" class="field-label">Link de acesso (opcional)</label>
+          <input id="f-email-access-url" type="url" class="field-input mt-1 mono" maxlength="500" placeholder="https://..." />
+          <p class="field-help">Vira um botão no e-mail. Use uma URL completa (http:// ou https://).</p>
+        </div>
+        <div>
+          <label for="f-thanks-url" class="field-label">Página de obrigado (URL)</label>
+          <input id="f-thanks-url" type="text" class="field-input mt-1 mono" maxlength="500" placeholder="/obrigado" />
+          <p class="field-help">Pra onde o checkout redireciona após o pagamento aprovado. Vazio = <span class="mono">/obrigado</span> (padrão). Aceita caminho (<span class="mono">/obrigado-produto</span>) ou URL completa.</p>
+        </div>
+        <div class="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3 space-y-3">
+          <div class="flex items-center gap-2 text-sky-300 text-sm font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>
+            Meta: Pixel + Conversion API (conta de anúncio desta oferta)
+          </div>
+          <div>
+            <label for="f-meta-pixel-id" class="field-label">Pixel ID</label>
+            <input id="f-meta-pixel-id" type="text" class="field-input mt-1 mono" maxlength="20" inputmode="numeric" pattern="[0-9]{6,20}" placeholder="ex.: 123456789012345" />
+            <p class="field-help">Pixel da conta dona desta oferta, usado no Pixel do navegador e na CAPI do checkout.</p>
+          </div>
+          <div>
+            <label for="f-meta-capi-token" class="field-label">Token da Conversion API</label>
+            <div class="relative mt-1">
+              <input id="f-meta-capi-token" type="password" class="field-input mono pr-10" maxlength="1000" autocomplete="off" spellcheck="false" placeholder="EAAG... (token da conta)" />
+              <button type="button" id="toggle-capi-token" title="Mostrar/ocultar token"
+                class="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-white flex items-center">
+                <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg id="eye-off" class="hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              </button>
+            </div>
+            <label id="f-meta-capi-token-clear-wrap" class="hidden field-help flex items-center gap-2 cursor-pointer mt-2">
+              <input type="checkbox" id="f-meta-capi-token-clear" class="w-4 h-4" />
+              Remover token
+            </label>
+            <p class="field-help">Token de acesso da CAPI da mesma conta do pixel. Fica só no servidor, nunca é enviado pro navegador (nem para esta tela).</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <label class="field-label flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="f-active" class="w-4 h-4" checked />
+            Ativa
+          </label>
+          <label class="field-label flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="f-email-enabled" class="w-4 h-4" />
+            Enviar e-mail
+          </label>
+          <label class="field-label flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="f-out-of-stock" class="w-4 h-4" />
+            Esgotada
+          </label>
+        </div>
+        <div id="form-error" class="hidden text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="modal-cancel"
+            class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm rounded-lg px-4 py-2 transition">
+            Cancelar
+          </button>
+          <button type="submit" id="modal-save"
+            class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+            Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = "/dashboard/api/offers";
+    let rows = [];
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function fmtBRLFromCents(c) {
+      const v = (Number(c || 0) / 100);
+      return "R$ " + v.toFixed(2).replace(".", ",");
+    }
+
+    function statusPill(r) {
+      if (!r.is_active) return '<span class="pill pill-inactive">⏸ Inativa</span>';
+      if (r.out_of_stock) return '<span class="pill pill-oos">🚫 Esgotada</span>';
+      return '<span class="pill pill-active">▶ Ativa</span>';
+    }
+
+    function rowHtml(r) {
+      const checkoutUrl = `/checkout/${encodeURIComponent(r.code)}`;
+      return `
+        <tr data-id="${escapeHtml(r.id)}">
+          <td>${statusPill(r)}</td>
+          <td>
+            <div class="font-mono text-xs text-sky-300">${escapeHtml(r.code)}</div>
+            <div class="font-semibold">${escapeHtml(r.name)}</div>
+            ${r.description ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(r.description.slice(0, 80))}${r.description.length > 80 ? "…" : ""}</div>` : ""}
+            <a href="${escapeHtml(checkoutUrl)}" target="_blank" class="text-xs text-slate-400 hover:text-sky-300 inline-flex items-center gap-1 mt-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              ${escapeHtml(checkoutUrl)}
+            </a>
+            <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+              <span>📊 Pixel: ${r.meta_pixel_id ? `<span class="mono text-slate-400">${escapeHtml(r.meta_pixel_id)}</span>` : '<span class="text-amber-400">não definido</span>'}</span>
+              <span>🔑 CAPI: ${r.meta_capi_token_set ? '<span class="text-emerald-400">✓ token</span>' : '<span class="text-amber-400">sem token</span>'}</span>
+            </div>
+          </td>
+          <td>
+            ${r.anchor_price_cents > 0 ? `<div class="price-old">${fmtBRLFromCents(r.anchor_price_cents)}</div>` : ""}
+            <div class="price-new">${fmtBRLFromCents(r.sale_price_cents)}</div>
+          </td>
+          <td>
+            ${r.email_enabled ? '<span class="pill pill-mail">✓ Enviando</span>' : '<span class="pill pill-inactive">– Off</span>'}
+          </td>
+          <td>
+            <label class="toggle">
+              <input type="checkbox" class="chk-active" data-id="${escapeHtml(r.id)}" ${r.is_active ? "checked" : ""} />
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td class="text-right pr-4">
+            <div class="flex items-center justify-end gap-1.5">
+              <button class="btn-edit icon-btn bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white" data-id="${escapeHtml(r.id)}" title="Editar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+              </button>
+              <button class="btn-delete icon-btn bg-rose-700/80 hover:bg-rose-600 text-rose-100 hover:text-white" data-id="${escapeHtml(r.id)}" data-name="${escapeHtml(r.name)}" title="Deletar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    const rowsEl = document.getElementById("rows");
+    const emptyEl = document.getElementById("empty");
+    const loadingEl = document.getElementById("loading");
+    const countEl = document.getElementById("count");
+
+    async function loadRows() {
+      loadingEl.classList.remove("hidden");
+      try {
+        const res = await fetch(API, { credentials: "same-origin" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Falha ao carregar");
+        rows = data.offers || [];
+        rowsEl.innerHTML = rows.map(rowHtml).join("");
+        emptyEl.classList.toggle("hidden", rows.length > 0);
+        countEl.textContent = `${rows.length} oferta${rows.length === 1 ? "" : "s"}`;
+      } catch (err) {
+        showToast("Erro: " + err.message);
+        emptyEl.classList.remove("hidden");
+      } finally {
+        loadingEl.classList.add("hidden");
+      }
+    }
+
+    const toastEl = document.getElementById("toast");
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1800);
+    }
+
+    const modalEl = document.getElementById("modal");
+    const modalTitleEl = document.getElementById("modal-title");
+    const formEl = document.getElementById("form");
+    const formErrorEl = document.getElementById("form-error");
+    const fId = document.getElementById("f-id");
+    const fCode = document.getElementById("f-code");
+    const fName = document.getElementById("f-name");
+    const fDescription = document.getElementById("f-description");
+    const fAnchor = document.getElementById("f-anchor");
+    const fSale = document.getElementById("f-sale");
+    const fOrderBumps = document.getElementById("f-order-bumps");
+    const fOrderBumpsEmpty = document.getElementById("f-order-bumps-empty");
+    const fEmailSubject = document.getElementById("f-email-subject");
+    const fEmailBody = document.getElementById("f-email-body");
+    const fEmailAccessUrl = document.getElementById("f-email-access-url");
+    const fThanksUrl = document.getElementById("f-thanks-url");
+    const fMetaPixelId = document.getElementById("f-meta-pixel-id");
+    const fMetaCapiToken = document.getElementById("f-meta-capi-token");
+    const fMetaCapiTokenClear = document.getElementById("f-meta-capi-token-clear");
+    const fMetaCapiTokenClearWrap = document.getElementById("f-meta-capi-token-clear-wrap");
+    const CAPI_TOKEN_PLACEHOLDER_NEW = fMetaCapiToken.placeholder;
+    const CAPI_TOKEN_PLACEHOLDER_SET = "Token configurado (deixe em branco para manter)";
+    // O servidor nunca devolve o token: só informa se há um salvo.
+    function setCapiTokenField(isSet) {
+      fMetaCapiToken.value = "";
+      fMetaCapiToken.disabled = false;
+      fMetaCapiToken.placeholder = isSet ? CAPI_TOKEN_PLACEHOLDER_SET : CAPI_TOKEN_PLACEHOLDER_NEW;
+      fMetaCapiTokenClear.checked = false;
+      fMetaCapiTokenClearWrap.classList.toggle("hidden", !isSet);
+    }
+    const fActive = document.getElementById("f-active");
+    const fEmailEnabled = document.getElementById("f-email-enabled");
+    const fOutOfStock = document.getElementById("f-out-of-stock");
+    const saveBtn = document.getElementById("modal-save");
+
+    function centsToReais(c) {
+      const v = Number(c || 0) / 100;
+      return v.toFixed(2);
+    }
+    function reaisToCents(v) {
+      const n = Math.round(parseFloat(String(v).replace(",", ".")) * 100);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function bumpRowHtml(bump = {}) {
+      const id = Number.isInteger(Number(bump.id)) && Number(bump.id) > 0 ? Number(bump.id) : "";
+      return `<div class="bump-row" data-bump-id="${id}">
+        <div class="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2 items-end">
+          <div>
+            <label class="field-label">Nome</label>
+            <input type="text" class="field-input mt-1 bump-name" maxlength="160" required value="${escapeHtml(bump.name || "")}" placeholder="Ex.: Pacote de templates" />
+          </div>
+          <div>
+            <label class="field-label">Valor (R$)</label>
+            <input type="number" class="field-input mt-1 bump-price" min="0.01" step="0.01" required value="${bump.price_cents ? centsToReais(bump.price_cents) : ""}" placeholder="9.90" />
+          </div>
+          <button type="button" class="btn-remove-bump bg-rose-700/80 hover:bg-rose-600 text-white rounded-lg px-3 py-2 text-xs">Remover</button>
+        </div>
+        <div class="mt-2">
+          <label class="field-label">Descrição curta</label>
+          <input type="text" class="field-input mt-1 bump-description" maxlength="500" value="${escapeHtml(bump.description || "")}" placeholder="Uma frase curta explicando o complemento" />
+        </div>
+        <label class="field-label flex items-center gap-2 cursor-pointer mt-2">
+          <input type="checkbox" class="bump-active w-4 h-4" ${bump.is_active === 0 || bump.is_active === false ? "" : "checked"} />
+          Exibir no checkout
+        </label>
+      </div>`;
+    }
+
+    function renderOrderBumps(bumps) {
+      fOrderBumps.innerHTML = (bumps || []).map(bumpRowHtml).join("");
+      fOrderBumpsEmpty.classList.toggle("hidden", fOrderBumps.children.length > 0);
+    }
+
+    function readOrderBumps() {
+      return Array.from(fOrderBumps.querySelectorAll(".bump-row")).map((row) => ({
+        id: row.dataset.bumpId ? Number(row.dataset.bumpId) : null,
+        name: row.querySelector(".bump-name").value.trim(),
+        description: row.querySelector(".bump-description").value.trim() || null,
+        price_cents: reaisToCents(row.querySelector(".bump-price").value),
+        is_active: row.querySelector(".bump-active").checked ? 1 : 0,
+      }));
+    }
+
+    function openModal(r) {
+      formErrorEl.classList.add("hidden");
+      formErrorEl.textContent = "";
+      if (r) {
+        modalTitleEl.textContent = "Editar oferta";
+        fId.value = r.id;
+        fCode.value = r.code;
+        fCode.readOnly = true;
+        fCode.classList.add("opacity-60");
+        fName.value = r.name;
+        fDescription.value = r.description || "";
+        fAnchor.value = centsToReais(r.anchor_price_cents);
+        fSale.value = centsToReais(r.sale_price_cents);
+        renderOrderBumps(Array.isArray(r.order_bumps) ? r.order_bumps : []);
+        fEmailSubject.value = r.email_subject || "";
+        fEmailBody.value = r.email_body || "";
+        fEmailAccessUrl.value = r.email_access_url || "";
+        fThanksUrl.value = r.thanks_url || "";
+        fMetaPixelId.value = r.meta_pixel_id || "";
+        setCapiTokenField(!!r.meta_capi_token_set);
+        fActive.checked = !!r.is_active;
+        fEmailEnabled.checked = !!r.email_enabled;
+        fOutOfStock.checked = !!r.out_of_stock;
+      } else {
+        modalTitleEl.textContent = "Nova oferta";
+        fId.value = "";
+        fCode.value = "";
+        fCode.readOnly = false;
+        fCode.classList.remove("opacity-60");
+        fName.value = "";
+        fDescription.value = "";
+        fAnchor.value = "";
+        fSale.value = "";
+        renderOrderBumps([]);
+        fEmailSubject.value = "";
+        fEmailBody.value = "";
+        fEmailAccessUrl.value = "";
+        fThanksUrl.value = "";
+        fMetaPixelId.value = "";
+        setCapiTokenField(false);
+        fActive.checked = true;
+        fEmailEnabled.checked = false;
+        fOutOfStock.checked = false;
+      }
+      // sempre reabre o token oculto
+      fMetaCapiToken.type = "password";
+      document.getElementById("eye-open").classList.remove("hidden");
+      document.getElementById("eye-off").classList.add("hidden");
+      modalEl.classList.remove("hidden");
+      setTimeout(() => (r ? fName : fCode).focus(), 50);
+    }
+    function closeModal() { modalEl.classList.add("hidden"); }
+
+    fMetaCapiTokenClear.addEventListener("change", () => {
+      fMetaCapiToken.disabled = fMetaCapiTokenClear.checked;
+      if (fMetaCapiTokenClear.checked) fMetaCapiToken.value = "";
+    });
+
+    document.getElementById("toggle-capi-token").addEventListener("click", () => {
+      const show = fMetaCapiToken.type === "password";
+      fMetaCapiToken.type = show ? "text" : "password";
+      document.getElementById("eye-open").classList.toggle("hidden", show);
+      document.getElementById("eye-off").classList.toggle("hidden", !show);
+    });
+
+    document.getElementById("btn-new").addEventListener("click", () => openModal(null));
+    document.getElementById("btn-add-bump").addEventListener("click", () => {
+      if (fOrderBumps.children.length >= 10) return showToast("Máximo de 10 order bumps");
+      fOrderBumps.insertAdjacentHTML("beforeend", bumpRowHtml());
+      fOrderBumpsEmpty.classList.add("hidden");
+      const last = fOrderBumps.lastElementChild;
+      if (last) last.querySelector(".bump-name").focus();
+    });
+    fOrderBumps.addEventListener("click", (e) => {
+      const button = e.target.closest(".btn-remove-bump");
+      if (!button) return;
+      button.closest(".bump-row").remove();
+      fOrderBumpsEmpty.classList.toggle("hidden", fOrderBumps.children.length > 0);
+    });
+    document.getElementById("modal-close").addEventListener("click", closeModal);
+    document.getElementById("modal-cancel").addEventListener("click", closeModal);
+    document.getElementById("btn-refresh").addEventListener("click", () => { loadRows(); showToast("Atualizado"); });
+    modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modalEl.classList.contains("hidden")) closeModal(); });
+
+    formEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      formErrorEl.classList.add("hidden");
+      const id = fId.value ? parseInt(fId.value, 10) : null;
+      const payload = {
+        code: fCode.value.trim(),
+        name: fName.value.trim(),
+        description: fDescription.value.trim() || null,
+        anchor_price_cents: reaisToCents(fAnchor.value || 0),
+        sale_price_cents: reaisToCents(fSale.value || 0),
+        order_bumps: readOrderBumps(),
+        email_subject: fEmailSubject.value.trim() || null,
+        email_body: fEmailBody.value.trim() || null,
+        email_access_url: fEmailAccessUrl.value.trim() || null,
+        thanks_url: fThanksUrl.value.trim() || null,
+        meta_pixel_id: fMetaPixelId.value.trim() || null,
+        is_active: fActive.checked ? 1 : 0,
+        email_enabled: fEmailEnabled.checked ? 1 : 0,
+        out_of_stock: fOutOfStock.checked ? 1 : 0,
+      };
+      // Token: ausente mantém o salvo, "" remove, texto novo substitui.
+      const newCapiToken = fMetaCapiToken.value.trim();
+      if (fMetaCapiTokenClear.checked) payload.meta_capi_token = "";
+      else if (newCapiToken) payload.meta_capi_token = newCapiToken;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Salvando…";
+      try {
+        const res = await fetch(id ? `${API}/${id}` : API, {
+          method: id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Falha ao salvar");
+        closeModal();
+        showToast(id ? "Oferta atualizada" : "Oferta criada");
+        await loadRows();
+      } catch (err) {
+        formErrorEl.textContent = err.message;
+        formErrorEl.classList.remove("hidden");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Salvar";
+      }
+    });
+
+    document.addEventListener("click", async (e) => {
+      const editBtn = e.target.closest(".btn-edit");
+      if (editBtn) {
+        const id = parseInt(editBtn.dataset.id, 10);
+        const r = rows.find(x => x.id === id);
+        if (r) openModal(r);
+        return;
+      }
+      const delBtn = e.target.closest(".btn-delete");
+      if (delBtn) {
+        const id = parseInt(delBtn.dataset.id, 10);
+        const name = delBtn.dataset.name;
+        if (!confirm(`Deletar a oferta "${name}"? Esta ação não pode ser desfeita. Pagamentos existentes não serão removidos.`)) return;
+        try {
+          const res = await fetch(`${API}/${id}`, { method: "DELETE", credentials: "same-origin" });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Falha ao deletar");
+          showToast("Oferta deletada");
+          await loadRows();
+        } catch (err) {
+          showToast("Erro: " + err.message);
+        }
+      }
+    });
+
+    document.addEventListener("change", async (e) => {
+      const chk = e.target.closest(".chk-active");
+      if (!chk) return;
+      const id = parseInt(chk.dataset.id, 10);
+      const r = rows.find(x => x.id === id);
+      if (!r) return;
+      const next = chk.checked ? 1 : 0;
+      try {
+        const res = await fetch(`${API}/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            code: r.code, name: r.name, description: r.description,
+            anchor_price_cents: r.anchor_price_cents, sale_price_cents: r.sale_price_cents,
+            order_bumps: Array.isArray(r.order_bumps) ? r.order_bumps : [],
+            email_subject: r.email_subject || null,
+            email_body: r.email_body || null,
+            email_access_url: r.email_access_url || null,
+            thanks_url: r.thanks_url || null,
+            meta_pixel_id: r.meta_pixel_id || null,
+            is_active: next,
+            email_enabled: r.email_enabled ? 1 : 0,
+            out_of_stock: r.out_of_stock ? 1 : 0,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Falha");
+        showToast(next ? "Ativada" : "Desativada");
+        await loadRows();
+      } catch (err) {
+        chk.checked = !chk.checked;
+        showToast("Erro: " + err.message);
+      }
+    });
+
+    loadRows();
+  </script>
+</body>
+</html>

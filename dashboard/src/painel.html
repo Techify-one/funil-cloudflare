@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel · __BRAND_NAME__</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%97%3C/text%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0b1220; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; }
+    thead th { position: sticky; top: 0; background: #0f1829; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; padding: 10px 12px; border-bottom: 1px solid #1f2a44; }
+    tbody td { padding: 8px 12px; border-bottom: 1px solid rgba(31,42,68,.6); font-size: 13px; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(30,41,59,.35); }
+    .url { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: #93c5fd; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    th.url-col, td.url-cell { width: 100%; max-width: 0; }
+    th.type-col, td.type-cell, th.page-col, td.page-cell, th.actions-col, td.actions-cell { white-space: nowrap; width: 1%; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .pill-public { background: rgba(34,197,94,.15); color: #4ade80; }
+    .pill-internal { background: rgba(56,189,248,.15); color: #38bdf8; }
+    .pill-external { background: rgba(244,114,182,.15); color: #f472b6; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1px solid #1f2a44; color: #e5e7eb; padding: 10px 16px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 60; }
+    .toast.show { opacity: 1; }
+    .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; transition: background .15s, color .15s; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(2, 6, 23, .7); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .modal { background: #111a2e; border: 1px solid #1f2a44; border-radius: 14px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; }
+    .field-input, .field-select, .field-textarea {
+      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 8px;
+      color: #e5e7eb; padding: 8px 10px; font-size: 13px;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus { outline: none; border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56,189,248,.25); }
+    .field-textarea { font-family: inherit; resize: vertical; min-height: 64px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 grid place-items-center text-lg">🔗</div>
+        <div>
+          <h1 class="text-lg font-semibold">Painel · __BRAND_NAME__</h1>
+          <p class="text-xs text-slate-400">Links das páginas em produção e ferramentas</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btn-new"
+          class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Novo link
+        </button>
+        <a href="/checkout-analytics"
+          class="inline-flex items-center gap-2 bg-indigo-700 hover:bg-indigo-600 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          Diagnóstico do checkout
+        </a>
+        <a href="/leads"
+          class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Voltar para Leads
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+    <div class="relative">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input id="search" type="search" placeholder="Pesquisar página, descrição ou URL…"
+        class="w-full bg-slate-900 border border-slate-700 rounded-lg text-sm pl-9 pr-9 py-2 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+      <button id="search-clear" type="button"
+        class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 grid place-items-center"
+        title="Limpar pesquisa">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <section class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table>
+          <thead>
+            <tr>
+              <th class="type-col">Tipo</th>
+              <th class="page-col">Página</th>
+              <th class="url-col">URL</th>
+              <th class="actions-col text-right pr-4">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="hidden px-4 py-8 text-center text-sm text-slate-500">Nenhum link encontrado.</div>
+      <div id="loading" class="px-4 py-8 text-center text-sm text-slate-500">Carregando…</div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-500 pt-2 pb-10">
+      <span data-host></span> · Cloudflare Workers · <span id="count">–</span>
+    </footer>
+    <script>document.querySelectorAll("[data-host]").forEach(function (el) { el.textContent = location.host; });</script>
+  </main>
+
+  <div id="toast" class="toast">Link copiado</div>
+
+  <div id="modal" class="modal-backdrop hidden">
+    <div class="modal p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="modal-title" class="text-base font-semibold">Novo link</h2>
+        <button id="modal-close" class="text-slate-400 hover:text-white" title="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="form" class="space-y-3">
+        <input type="hidden" id="f-id" />
+        <div>
+          <label for="f-type" class="field-label">Tipo</label>
+          <select id="f-type" class="field-select mt-1" required>
+            <option value="public">Pública</option>
+            <option value="internal">Interna</option>
+            <option value="external">Externa</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-name" class="field-label">Nome</label>
+          <input id="f-name" type="text" class="field-input mt-1" maxlength="80" required />
+        </div>
+        <div>
+          <label for="f-description" class="field-label">Descrição</label>
+          <textarea id="f-description" class="field-textarea mt-1" maxlength="200" rows="2"></textarea>
+        </div>
+        <div>
+          <label for="f-url" class="field-label">URL completa</label>
+          <input id="f-url" type="url" class="field-input mt-1" placeholder="https://…" required />
+        </div>
+        <div>
+          <label for="f-position" class="field-label">Posição (ordenação)</label>
+          <input id="f-position" type="number" class="field-input mt-1" min="0" step="10" placeholder="0 = adicionar no fim" />
+        </div>
+        <div id="form-error" class="hidden text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"></div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="modal-cancel"
+            class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm rounded-lg px-4 py-2 transition">
+            Cancelar
+          </button>
+          <button type="submit" id="modal-save"
+            class="bg-sky-600 hover:bg-sky-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition">
+            Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = "/dashboard/api/painel-links";
+    let links = [];
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function pillFor(type) {
+      if (type === "public") return '<span class="pill pill-public">Pública</span>';
+      if (type === "external") return '<span class="pill pill-external">Externa</span>';
+      return '<span class="pill pill-internal">Interna</span>';
+    }
+
+    // Só http(s) ou caminho relativo vira link clicável; qualquer outro
+    // esquema (javascript:, data:, ...) cai em "#".
+    function safeHref(raw) {
+      const value = String(raw ?? "").trim();
+      if (!value) return "#";
+      if (/^\/(?!\/)/.test(value)) return value;
+      try {
+        const parsed = new URL(value);
+        return parsed.protocol === "http:" || parsed.protocol === "https:" ? value : "#";
+      } catch {
+        return "#";
+      }
+    }
+
+    function rowHtml(link) {
+      const url = link.url;
+      const href = safeHref(url);
+      return `
+        <tr data-id="${escapeHtml(link.id)}">
+          <td class="type-cell">${pillFor(link.type)}</td>
+          <td class="page-cell">
+            <div class="font-semibold">${escapeHtml(link.name)}</div>
+            <div class="text-xs text-slate-400">${escapeHtml(link.description)}</div>
+          </td>
+          <td class="url-cell">
+            <a href="${escapeHtml(href)}" target="_blank" rel="noopener" class="url hover:underline" title="${escapeHtml(url)}">${escapeHtml(url)}</a>
+          </td>
+          <td class="actions-cell text-right pr-4">
+            <div class="flex items-center justify-end gap-1.5 leading-none py-0.5">
+              <button class="btn-copy icon-btn bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                data-url="${escapeHtml(url)}" title="Copiar URL">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+              <a href="${escapeHtml(href)}" target="_blank" rel="noopener"
+                class="icon-btn bg-sky-600 hover:bg-sky-500 text-white" title="Abrir">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+              <button class="btn-edit icon-btn bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                data-id="${escapeHtml(link.id)}" title="Editar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg>
+              </button>
+              <button class="btn-delete icon-btn bg-rose-700/80 hover:bg-rose-600 text-rose-100 hover:text-white"
+                data-id="${escapeHtml(link.id)}" data-name="${escapeHtml(link.name)}" title="Deletar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    const rowsEl = document.getElementById("rows");
+    const emptyEl = document.getElementById("empty");
+    const loadingEl = document.getElementById("loading");
+    const countEl = document.getElementById("count");
+    const searchEl = document.getElementById("search");
+    const searchClearEl = document.getElementById("search-clear");
+
+    function applyFilter() {
+      const q = searchEl.value.trim().toLowerCase();
+      searchClearEl.classList.toggle("hidden", q.length === 0);
+      const filtered = !q ? links : links.filter(l => {
+        const hay = [l.name, l.description, l.url, l.type].join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+      rowsEl.innerHTML = filtered.map(rowHtml).join("");
+      emptyEl.classList.toggle("hidden", filtered.length > 0 || links.length === 0);
+      countEl.textContent = `${filtered.length} link${filtered.length === 1 ? "" : "s"}`;
+    }
+
+    async function loadLinks() {
+      loadingEl.classList.remove("hidden");
+      try {
+        const res = await fetch(API, { credentials: "same-origin" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Falha ao carregar");
+        links = data.links || [];
+        applyFilter();
+      } catch (err) {
+        showToast("Erro: " + err.message);
+        emptyEl.classList.remove("hidden");
+      } finally {
+        loadingEl.classList.add("hidden");
+      }
+    }
+
+    searchEl.addEventListener("input", applyFilter);
+    searchClearEl.addEventListener("click", () => { searchEl.value = ""; searchEl.focus(); applyFilter(); });
+
+    const toastEl = document.getElementById("toast");
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1800);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    // ===== Modal =====
+    const modalEl = document.getElementById("modal");
+    const modalTitleEl = document.getElementById("modal-title");
+    const formEl = document.getElementById("form");
+    const formErrorEl = document.getElementById("form-error");
+    const fId = document.getElementById("f-id");
+    const fType = document.getElementById("f-type");
+    const fName = document.getElementById("f-name");
+    const fDescription = document.getElementById("f-description");
+    const fUrl = document.getElementById("f-url");
+    const fPosition = document.getElementById("f-position");
+    const saveBtn = document.getElementById("modal-save");
+
+    function openModal(link) {
+      formErrorEl.classList.add("hidden");
+      formErrorEl.textContent = "";
+      if (link) {
+        modalTitleEl.textContent = "Editar link";
+        fId.value = link.id;
+        fType.value = link.type;
+        fName.value = link.name;
+        fDescription.value = link.description || "";
+        fUrl.value = link.url;
+        fPosition.value = link.position ?? 0;
+      } else {
+        modalTitleEl.textContent = "Novo link";
+        fId.value = "";
+        fType.value = "external";
+        fName.value = "";
+        fDescription.value = "";
+        fUrl.value = "";
+        fPosition.value = "";
+      }
+      modalEl.classList.remove("hidden");
+      setTimeout(() => fName.focus(), 50);
+    }
+
+    function closeModal() {
+      modalEl.classList.add("hidden");
+    }
+
+    document.getElementById("btn-new").addEventListener("click", () => openModal(null));
+    document.getElementById("modal-close").addEventListener("click", closeModal);
+    document.getElementById("modal-cancel").addEventListener("click", closeModal);
+    modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modalEl.classList.contains("hidden")) closeModal(); });
+
+    formEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      formErrorEl.classList.add("hidden");
+      const id = fId.value ? parseInt(fId.value, 10) : null;
+      const payload = {
+        type: fType.value,
+        name: fName.value.trim(),
+        description: fDescription.value.trim(),
+        url: fUrl.value.trim(),
+        position: fPosition.value ? parseInt(fPosition.value, 10) : 0,
+      };
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Salvando…";
+      try {
+        const res = await fetch(id ? `${API}/${id}` : API, {
+          method: id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Falha ao salvar");
+        closeModal();
+        showToast(id ? "Link atualizado" : "Link criado");
+        await loadLinks();
+      } catch (err) {
+        formErrorEl.textContent = err.message;
+        formErrorEl.classList.remove("hidden");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Salvar";
+      }
+    });
+
+    document.addEventListener("click", async (e) => {
+      const copyBtn = e.target.closest(".btn-copy");
+      if (copyBtn) {
+        const ok = await copyText(copyBtn.dataset.url);
+        showToast(ok ? "Link copiado" : "Falha ao copiar");
+        return;
+      }
+      const editBtn = e.target.closest(".btn-edit");
+      if (editBtn) {
+        const id = parseInt(editBtn.dataset.id, 10);
+        const link = links.find(l => l.id === id);
+        if (link) openModal(link);
+        return;
+      }
+      const deleteBtn = e.target.closest(".btn-delete");
+      if (deleteBtn) {
+        const id = parseInt(deleteBtn.dataset.id, 10);
+        const name = deleteBtn.dataset.name;
+        if (!confirm(`Deletar o link "${name}"? Esta ação não pode ser desfeita.`)) return;
+        try {
+          const res = await fetch(`${API}/${id}`, { method: "DELETE", credentials: "same-origin" });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Falha ao deletar");
+          showToast("Link deletado");
+          await loadLinks();
+        } catch (err) {
+          showToast("Erro: " + err.message);
+        }
+      }
+    });
+
+    loadLinks();
+  </script>
+</body>
+</html>
